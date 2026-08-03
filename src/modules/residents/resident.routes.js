@@ -17,4 +17,18 @@ router.put(
     residentController.updateResidentProfile
 );
 
+router.patch(
+    "/profile",
+    authMiddleware.authenticate,
+    residentValidation.updateResidentProfile,
+    residentController.updateResidentProfile
+);
+
+router.patch(
+    "/password",
+    authMiddleware.authenticate,
+    residentValidation.changeResidentPassword,
+    residentController.changeResidentPassword
+);
+
 module.exports = router;

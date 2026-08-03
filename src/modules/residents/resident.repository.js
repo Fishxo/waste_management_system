@@ -21,6 +21,28 @@ exports.findResidentById = async (id) => {
     return result.rows[0];
 };
 
+exports.findResidentPasswordById = async (id) => {
+    const query = `
+        SELECT password_hash
+        FROM residents
+        WHERE id = $1
+    `;
+
+    const result = await pool.query(query, [id]);
+
+    return result.rows[0] || null;
+};
+
+exports.updateResidentPassword = async (id, passwordHash) => {
+    const query = `
+        UPDATE residents
+        SET password_hash = $1
+        WHERE id = $2
+    `;
+
+    await pool.query(query, [passwordHash, id]);
+};
+
 //making an update for resident 
 exports.updateResidentProfile = async (id, data) => {
     const query = `

@@ -40,10 +40,11 @@ exports.login = async (email, password) => {
 };
 
 //update the report status 
-exports.updateReportStatus = async (reportId, status) => {
+exports.updateReportStatus = async (reportId, status, adminId) => {
     const report = await reportRepository.updateReportStatus(
         reportId,
-        status
+        status,
+        adminId
     );
 
     if (!report) {
@@ -51,4 +52,34 @@ exports.updateReportStatus = async (reportId, status) => {
     }
 
     return report;
+};
+
+//getting whole reports including status
+exports.getAllReports = async (status) => {
+    const reports = await adminRepository.getAllReports(status);
+
+    return reports;
+};
+
+//get admin dashboard numbers 
+exports.getDashboardStatistics = async () => {
+    const statistics = await adminRepository.getDashboardStatistics();
+
+    return {
+        totalResidents: Number(statistics.total_residents),
+        totalReports: Number(statistics.total_reports),
+        pendingReports: Number(statistics.pending_reports),
+        inProgressReports: Number(statistics.in_progress_reports),
+        resolvedReports: Number(statistics.resolved_reports),
+    };
+};
+
+//getting the whole residnets 
+exports.getAllResidents = async () => {
+    return await adminRepository.getAllResidents();
+};
+
+//getting the residnet by id 
+exports.getResidentById = async (id) => {
+    return await adminRepository.getResidentById(id);
 };

@@ -69,3 +69,45 @@ exports.getReportById = async (req, res) => {
         });
     }
 };
+
+//getting the report history
+exports.getReportHistory = async (req, res) => {
+
+    try {
+
+        const { id } = req.params;
+
+        const residentId = req.user.id;
+
+        console.log("REPORT ID:", req.params.id);
+console.log("USER FROM TOKEN:", req.user);
+
+
+        const history = await reportService.getReportHistory(
+            id,
+            residentId
+        );
+
+
+        res.status(200).json({
+            message: "Report history retrieved successfully",
+            data: history,
+        });
+
+
+    } catch (err) {
+
+        if (err.message === "Report not found") {
+            return res.status(404).json({
+                message: "Report not found",
+            });
+        }
+
+
+        console.log("GET REPORT HISTORY ERROR:", err);
+
+        res.status(500).json({
+            message: "Server error",
+        });
+    }
+};

@@ -29,3 +29,20 @@ exports.getReportById = async (reportId, residentId) => {
 
     return report;
 };
+
+// getting report history
+exports.getReportHistory = async (reportId, residentId) => {
+
+    const report = await reportRepository.getReportById(
+        reportId,
+        residentId
+    );
+
+    if (!report) {
+        throw new Error("Report not found");
+    }
+
+    const history = await reportRepository.getReportHistory(reportId);
+
+    return history;
+};

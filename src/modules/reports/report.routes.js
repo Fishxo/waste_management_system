@@ -23,4 +23,12 @@ router.get(
     authMiddleware.authenticate,
     reportController.getReportById
 );
+
+//getting the report history 
+router.get(
+    "/:id/history",
+    authMiddleware.authenticate,
+    reportController.getReportHistory
+);
+
 module.exports = router;

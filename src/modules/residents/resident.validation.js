@@ -46,3 +46,22 @@ exports.updateResidentProfile = (req, res, next) => {
 
     next();
 };
+
+// Validate resident password change
+exports.changeResidentPassword = (req, res, next) => {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+        return res.status(400).json({
+            message: "Current password and new password are required",
+        });
+    }
+
+    if (newPassword.length < 6) {
+        return res.status(400).json({
+            message: "New password should be at least 6 characters",
+        });
+    }
+
+    next();
+};

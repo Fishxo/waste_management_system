@@ -58,16 +58,98 @@ exports.getReportById = async (reportId, residentId) => {
     return result.rows[0];
 };
 
-// updating report status by municipal admin
-exports.updateReportStatus = async (reportId, status) => {
+// updating report status by municipal admin + saving history
+exports.updateReportStatus = async (reportId, status, adminId) => {
+
+    const client = await pool.connect();
+
+    try {
+        await client.query("BEGIN");
+
+        // get current status before update
+        const oldStatusResult = await client.query(
+            `
+            SELECT status
+            FROM reports
+            WHERE id = $1
+            `,
+            [reportId]
+        );
+
+        if (oldStatusResult.rows.length === 0) {
+            throw new Error("Report not found");
+        }
+
+        const oldStatus = oldStatusResult.rows[0].status;
+
+
+        // update report status
+        const updateResult = await client.query(
+            `
+            UPDATE reports
+            SET status = $1
+            WHERE id = $2
+            RETURNING *
+            `,
+            [status, reportId]
+        );
+
+
+        // insert history record
+        await client.query(
+            `
+            INSERT INTO report_status_history
+            (
+                report_id,
+                old_status,
+                new_status,
+                changed_by
+            )
+            VALUES ($1, $2, $3, $4)
+            `,
+            [
+                reportId,
+                oldStatus,
+                status,
+                adminId
+            ]
+        );
+
+
+        await client.query("COMMIT");
+
+        return updateResult.rows[0];
+
+
+    } catch (error) {
+
+        await client.query("ROLLBACK");
+        throw error;
+
+    } finally {
+
+        client.release();
+
+    }
+};
+
+// getting report status history
+exports.getReportHistory = async (reportId) => {
+
     const query = `
-        UPDATE reports
-        SET status = $1
-        WHERE id = $2
-        RETURNING *
+        SELECT
+            id,
+            report_id,
+            old_status,
+            new_status,
+            changed_by,
+            changed_at
+        FROM report_status_history
+        WHERE report_id = $1
+        ORDER BY changed_at ASC
     `;
 
-    const result = await pool.query(query, [status, reportId]);
+    const result = await pool.query(query, [reportId]);
 
-    return result.rows[0];
+    return result.rows;
 };

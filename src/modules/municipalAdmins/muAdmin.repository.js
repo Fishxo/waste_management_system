@@ -30,3 +30,99 @@ exports.updateReportStatus = async (reportId, status) => {
 
     return report;
 };
+
+//getting all reports made by the whole resident or by thir status if status reuiest exist 
+
+
+exports.getAllReports = async (status) => {
+    let query = `
+        SELECT
+            r.id,
+            r.title,
+            r.description,
+            r.status,
+            r.created_at,
+            res.id AS resident_id,
+            res.first_name,
+            res.last_name,
+            res.email
+        FROM reports r
+        JOIN residents res
+            ON r.resident_id = res.id
+    `;
+
+    const values = [];
+
+    if (status) {
+        query += ` WHERE r.status = $1`;
+        values.push(status);
+    }
+
+    query += ` ORDER BY r.created_at DESC`;
+
+    const result = await pool.query(query, values);
+
+    return result.rows;
+};
+
+//getting admin dashboard numbers 
+exports.getDashboardStatistics = async () => {
+    const query = `
+        SELECT
+            (SELECT COUNT(*) FROM residents) AS total_residents,
+            (SELECT COUNT(*) FROM reports) AS total_reports,
+            (SELECT COUNT(*) FROM reports WHERE status = 'pending') AS pending_reports,
+            (SELECT COUNT(*) FROM reports WHERE status = 'in_progress') AS in_progress_reports,
+            (SELECT COUNT(*) FROM reports WHERE status = 'resolved') AS resolved_reports
+    `;
+
+    const result = await pool.query(query);
+
+    return result.rows[0];
+};
+
+//getting the whole residnet 
+exports.getAllResidents = async () => {
+
+    const query = `
+        SELECT
+            id,
+            first_name,
+            last_name,
+            email,
+            phone_number,
+            kifle_ketema,
+            kebele,
+            sefer,
+            created_at
+        FROM residents
+        ORDER BY created_at DESC
+    `;
+
+    const result = await pool.query(query);
+
+    return result.rows;
+};
+
+//getting resident by its id 
+exports.getResidentById = async (id) => {
+
+    const query = `
+        SELECT
+            id,
+            first_name,
+            last_name,
+            email,
+            phone_number,
+            kifle_ketema,
+            kebele,
+            sefer,
+            created_at
+        FROM residents
+        WHERE id = $1
+    `;
+
+    const result = await pool.query(query, [id]);
+
+    return result.rows[0];
+};
