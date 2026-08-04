@@ -13,6 +13,18 @@ exports.createReport = async (req, res) => {
         });
 
     } catch (err) {
+        if (err.message === "Your account has been deactivated") {
+            return res.status(403).json({
+                message: err.message,
+            });
+        }
+
+        if (err.message === "Resident not found") {
+            return res.status(404).json({
+                message: err.message,
+            });
+        }
+
         console.log("CREATE REPORT ERROR:", err);
 
         res.status(500).json({

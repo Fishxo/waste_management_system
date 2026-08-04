@@ -19,12 +19,12 @@ export default function AdminReports() {
   const fetchReports = (status = '') => {
     setLoading(true)
     const url = status
-      ? `/municipal-admin/reports?status=${status}`
-      : '/municipal-admin/reports'
+      ? `/muAdmin/reports?status=${status}`
+      : '/muAdmin/reports'
     api
       .get(url)
       .then(({ data }) => {
-        setReports(Array.isArray(data) ? data : data.reports || [])
+        setReports(Array.isArray(data) ? data : data.data || [])
       })
       .finally(() => setLoading(false))
   }
@@ -36,7 +36,7 @@ export default function AdminReports() {
   const handleStatusChange = async (reportId, newStatus) => {
     setUpdating(reportId)
     try {
-      await api.patch(`/municipal-admin/report/${reportId}/status`, {
+      await api.patch(`/muAdmin/report/${reportId}/status`, {
         status: newStatus,
       })
       fetchReports(filter)
@@ -96,8 +96,8 @@ export default function AdminReports() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-gray-500">
-                    {report.createdAt
-                      ? new Date(report.createdAt).toLocaleDateString()
+                    {report.created_at
+                      ? new Date(report.created_at).toLocaleDateString()
                       : '—'}
                   </td>
                   <td className="px-4 py-3">

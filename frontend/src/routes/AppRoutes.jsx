@@ -13,9 +13,12 @@ import ResidentProfile from '../pages/resident/Profile'
 import CreateReport from '../pages/resident/CreateReport'
 import MyReports from '../pages/resident/MyReports'
 import ReportDetails from '../pages/resident/ReportDetails'
+import ResidentSchedules from '../pages/resident/Schedules'
 
 import AdminDashboard from '../pages/admin/Dashboard'
 import AdminReports from '../pages/admin/Reports'
+import AdminResidents from '../pages/admin/Residents'
+import AdminSchedules from '../pages/admin/Schedules'
 
 function DashboardLayout({ children }) {
   return (
@@ -87,6 +90,16 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/resident/schedules"
+        element={
+          <ProtectedRoute role="resident">
+            <DashboardLayout>
+              <ResidentSchedules />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
 
       <Route
         path="/admin/dashboard"
@@ -104,6 +117,26 @@ export default function AppRoutes() {
           <ProtectedRoute role="municipal_admin">
             <DashboardLayout>
               <AdminReports />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/residents"
+        element={
+          <ProtectedRoute role="municipal_admin">
+            <DashboardLayout>
+              <AdminResidents />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/schedules"
+        element={
+          <ProtectedRoute role="municipal_admin">
+            <DashboardLayout>
+              <AdminSchedules />
             </DashboardLayout>
           </ProtectedRoute>
         }

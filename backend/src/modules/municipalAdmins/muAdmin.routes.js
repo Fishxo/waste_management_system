@@ -52,4 +52,25 @@ router.patch(
     adminController.updateReportStatus
 );
 
+
+//making delete the residnet from the admin dashbourd 
+router.delete(
+  "/resident/:id",
+  authenticateMuAdmin,
+  adminController.deleteResident
+);
+
+//making account deactivate for residnet 
+router.patch(
+  "/resident/:id/deactivate",
+  authenticateMuAdmin,
+  adminController.deactivateResident
+);
+//making activate resident account
+router.patch(
+  "/resident/:id/activate",
+  authenticateMuAdmin,
+  adminController.activateResident
+);
 module.exports = router;
+

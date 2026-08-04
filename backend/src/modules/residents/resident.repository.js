@@ -81,3 +81,14 @@ exports.updateResidentProfile = async (id, data) => {
 
     return result.rows[0];
 };
+
+
+//making deactive the resident user 
+exports.findResidentActiveStatus = async (id) => {
+  const result = await pool.query(
+    `SELECT is_active FROM residents WHERE id = $1`,
+    [id]
+  );
+
+  return result.rows[0] || null;
+};

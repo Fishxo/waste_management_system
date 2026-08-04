@@ -17,15 +17,38 @@ export default function AdminLogin() {
     e.preventDefault()
     setError('')
     setLoading(true)
+
+    console.log('Admin login email:', form.email)
+    console.log('Admin login password provided:', !!form.password)
+
     try {
       const { data } = await api.post('/muAdmin/login', form)
+      console.log('Admin login API response:', data)
+
       const res = data.data || data
-      login({ id: res.id, username: res.username, email: res.email, role: 'municipal_admin' }, res.token)
+      login(
+        {
+          id: res.id,
+          username: res.username,
+          email: res.email,
+          role: 'municipal_admin',
+        },
+        res.token
+      )
+
+      console.log('Stored token:', res.token)
+      console.log('Stored user role:', 'municipal_admin')
+
       navigate('/admin/dashboard')
     } catch (err) {
+      const status = err.response?.status
       const msg =
-        err.response?.data?.message ||
-        (typeof err.response?.data === 'string' ? err.response.data : 'Login failed')
+        status === 401
+          ? 'Invalid email or password'
+          : err.response?.data?.message ||
+            (typeof err.response?.data === 'string'
+              ? err.response.data
+              : 'Login failed')
       setError(msg)
     } finally {
       setLoading(false)

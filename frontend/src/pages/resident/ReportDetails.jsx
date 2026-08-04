@@ -47,8 +47,8 @@ export default function ReportDetails() {
         <div className="text-sm text-gray-500">
           <p>
             Created:{' '}
-            {report.createdAt
-              ? new Date(report.createdAt).toLocaleString()
+            {report.created_at
+              ? new Date(report.created_at).toLocaleString()
               : '—'}
           </p>
           {report.updatedAt && (

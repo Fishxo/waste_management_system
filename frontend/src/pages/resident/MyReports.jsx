@@ -56,8 +56,8 @@ export default function MyReports() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-gray-500">
-                    {report.createdAt
-                      ? new Date(report.createdAt).toLocaleDateString()
+                    {report.created_at
+                      ? new Date(report.created_at).toLocaleDateString()
                       : '—'}
                   </td>
                   <td className="px-4 py-3">

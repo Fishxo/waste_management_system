@@ -147,3 +147,81 @@ exports.getResidentById = async (req, res) => {
         });
     }
 };
+
+//making delete the resident from the admin dashbourd 
+exports.deleteResident = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const resident = await adminService.deleteResident(id);
+
+    res.status(200).json({
+      message: "Resident deleted successfully",
+      data: resident,
+    });
+  } catch (error) {
+    if (error.message === "Resident not found") {
+      return res.status(404).json({
+        message: error.message,
+      });
+    }
+
+    console.error(error);
+
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};
+
+//making deactivate the resident account 
+exports.deactivateResident = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const resident = await adminService.setResidentActive(id, false);
+
+    res.status(200).json({
+      message: "Resident account deactivated successfully",
+      data: resident,
+    });
+  } catch (error) {
+    if (error.message === "Resident not found") {
+      return res.status(404).json({
+        message: error.message,
+      });
+    }
+
+    console.error(error);
+
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};
+
+//making activate the resident account 
+exports.activateResident = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const resident = await adminService.setResidentActive(id, true);
+
+    res.status(200).json({
+      message: "Resident account activated successfully",
+      data: resident,
+    });
+  } catch (error) {
+    if (error.message === "Resident not found") {
+      return res.status(404).json({
+        message: error.message,
+      });
+    }
+
+    console.error(error);
+
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};

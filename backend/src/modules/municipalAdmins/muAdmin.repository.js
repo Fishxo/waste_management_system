@@ -94,7 +94,8 @@ exports.getAllResidents = async () => {
             kifle_ketema,
             kebele,
             sefer,
-            created_at
+            created_at,
+            is_active
         FROM residents
         ORDER BY created_at DESC
     `;
@@ -117,7 +118,8 @@ exports.getResidentById = async (id) => {
             kifle_ketema,
             kebele,
             sefer,
-            created_at
+            created_at,
+            is_active
         FROM residents
         WHERE id = $1
     `;
@@ -125,4 +127,35 @@ exports.getResidentById = async (id) => {
     const result = await pool.query(query, [id]);
 
     return result.rows[0];
+};
+
+//making delete the user from admin dashboaurd 
+exports.deleteResidentById = async (id) => {
+    const result = await pool.query(
+        `DELETE FROM residents
+        WHERE id = $1
+        RETURNING id, first_name, last_name, email`,
+        [id]
+    );
+    return result.rows[0] || null;
+}
+
+//making the resident deactivate 
+exports.updateResidentActive = async (id, isActive) => {
+  const result = await pool.query(
+    `
+    UPDATE residents
+    SET is_active = $2
+    WHERE id = $1
+    RETURNING
+      id,
+      first_name,
+      last_name,
+      email,
+      is_active
+    `,
+    [id, isActive]
+  );
+
+  return result.rows[0] || null;
 };

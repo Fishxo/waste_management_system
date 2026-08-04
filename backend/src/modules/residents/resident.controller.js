@@ -1,4 +1,5 @@
 const residentService = require("./resident.service");
+const scheduleService = require("../schedules/schedule.service");
 
 exports.changeResidentPassword = async (req, res) => {
     try {
@@ -48,6 +49,37 @@ exports.getResidentProfile = async (req, res) => {
                 message: "Resident not found",
             });
         }
+
+        res.status(500).json({
+            message: "Server error",
+        });
+    }
+};
+
+//getting collection schedules for the resident's sub-city
+exports.getResidentSchedules = async (req, res) => {
+    try {
+        const resident = await residentService.getResidentProfile(
+            req.user.id
+        );
+
+        const schedules = await scheduleService.getSchedulesForResident(
+            resident.kifle_ketema
+        );
+
+        res.status(200).json({
+            message: "Schedules retrieved successfully",
+            data: schedules,
+        });
+
+    } catch (err) {
+        if (err.message === "Resident not found") {
+            return res.status(404).json({
+                message: "Resident not found",
+            });
+        }
+
+        console.log("GET RESIDENT SCHEDULES ERROR:", err);
 
         res.status(500).json({
             message: "Server error",

@@ -16,8 +16,9 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     api
-      .get('/municipal-admin/dashboard')
-      .then(({ data }) => setStats(data))
+      .get('/muAdmin/dashboard')
+      .then(({ data }) => setStats(data.data))
+      .catch(()=> setStats(null))
       .finally(() => setLoading(false))
   }, [])
 

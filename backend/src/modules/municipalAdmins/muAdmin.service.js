@@ -83,3 +83,25 @@ exports.getAllResidents = async () => {
 exports.getResidentById = async (id) => {
     return await adminRepository.getResidentById(id);
 };
+
+//deleting the resident from the admin dashbourd 
+exports.deleteResident = async (id) => {
+  const resident = await adminRepository.deleteResidentById(id);
+
+  if (!resident) {
+    throw new Error("Resident not found");
+  }
+
+  return resident;
+};
+
+//making the residnet account deactivate 
+exports.setResidentActive = async (id, isActive) => {
+  const resident = await adminRepository.updateResidentActive(id, isActive);
+
+  if (!resident) {
+    throw new Error("Resident not found");
+  }
+
+  return resident;
+};

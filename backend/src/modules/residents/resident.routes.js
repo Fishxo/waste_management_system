@@ -9,6 +9,12 @@ router.get(
     residentController.getResidentProfile
 );
 
+router.get(
+    "/schedules",
+    authMiddleware.authenticate,
+    residentController.getResidentSchedules
+);
+
 //getting the update profile requist for resident
 router.put(
     "/profile",

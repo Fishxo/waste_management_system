@@ -1,6 +1,18 @@
 const reportRepository = require("./report.repository");
+const residentRepository = require("../residents/resident.repository");
 
 exports.createReport = async (residentId, data) => {
+    const resident = await residentRepository.findResidentActiveStatus(residentId);
+
+    if (!resident) {
+        throw new Error("Resident not found");
+    }
+
+    if (resident.is_active === false) {
+        throw new Error("Your account has been deactivated");
+    }
+    console.log("resident from db", resident)
+    
     const report = await reportRepository.createReport(
         residentId,
         data
@@ -46,3 +58,4 @@ exports.getReportHistory = async (reportId, residentId) => {
 
     return history;
 };
+

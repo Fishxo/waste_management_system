@@ -19,7 +19,18 @@ export default function ResidentLogin() {
     setLoading(true)
     try {
       const { data } = await api.post('/auth/login', form)
-      login({ ...data.user, role: 'resident' }, data.token)
+      const resident = data.data || {}
+      login(
+        {
+          id: resident.id,
+          firstName: resident.first_name,
+          lastName: resident.last_name,
+          email: resident.email,
+          phoneNumber: resident.phone_number,
+          role: 'resident',
+        },
+        data.token
+      )
       navigate('/resident/dashboard')
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed')
