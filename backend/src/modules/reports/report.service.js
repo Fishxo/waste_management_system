@@ -59,3 +59,50 @@ exports.getReportHistory = async (reportId, residentId) => {
     return history;
 };
 
+
+//making update the report from the user side 
+exports.updateReport = async (reportId, data, residentId) => {
+
+    const report = await reportRepository.findById(reportId);
+
+    //validation for making update 
+    if (!report) {
+        throw new Error("report not found")
+    }
+    
+    if (report.resident_id !== residentId) {
+        throw new Error("resident is not found");
+    }
+    if (report.status == "in_progress") {
+        throw new Error("report in progress state can not be edit");
+    }
+    //check account validity
+    const resident = await reportRepository.findById(residentId)
+
+    if (!resident.is_active) {
+        throw new Error("your account has been deactivated, you can not make update");
+
+    }
+    return await reportRepository.updateReport(reportId, data);
+    
+};
+
+//making delete report from the resident side 
+exports.deleteReport = async (reportId, residentId) => {
+
+    const report = await reportRepository.findById(reportId);
+
+    if (!report) {
+        throw new Error("Report not found");
+    }
+
+    if (report.resident_id !== residentId) {
+        throw new Error("You cannot delete this report");
+    }
+
+    if (report.status !== "pending") {
+        throw new Error("You cannot delete a processed report");
+    }
+
+    return await reportRepository.deleteReport(reportId);
+};

@@ -27,6 +27,7 @@ export default function ResidentLogin() {
           lastName: resident.last_name,
           email: resident.email,
           phoneNumber: resident.phone_number,
+          isActive: resident.is_active,
           role: 'resident',
         },
         data.token

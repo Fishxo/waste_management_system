@@ -153,3 +153,39 @@ exports.getReportHistory = async (reportId) => {
 
     return result.rows;
 };
+
+//checking the report is existing 
+exports.findById = async (reportId) => {
+    const result = await pool.query(
+        "SELECT * FROM reports WHERE id = $1",
+        [reportId]
+    );
+    return result.rows[0];
+}
+
+//making update report is functional
+exports.updateReport = async (reportId, data) => {
+    const { title, description } = data;
+
+    const result = await pool.query(
+        `UPDATE reports
+        SET title = $1,
+        description = $2
+        WHERE id = $3
+        RETURNING *`
+        [title, description, reportId]
+    );
+    return result.rows[0];
+}
+
+//making delete the report from the resdident side 
+exports.deleteReport = async (id) => {
+   
+
+    const result = await pool.query(
+        `DELETE FROM reports
+        WHERE id = $1
+        RETURNING id,title,description`, [id]
+    );
+    return result.rows[0]|| null;
+}

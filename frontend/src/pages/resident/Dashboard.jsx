@@ -25,10 +25,25 @@ export default function ResidentDashboard() {
       .finally(() => setLoading(false))
   }, [])
 
+  const isDeactivated = user?.isActive === false
+
   if (loading) return <Loading />
 
   return (
     <div>
+      {isDeactivated && (
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6">
+          <p className="font-semibold flex items-center gap-2">
+            <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500" />
+            This account has been deactivated
+          </p>
+          <p className="text-sm mt-1">
+            Your account is currently deactivated. Please contact your
+            municipal administrator to reactivate it.
+          </p>
+        </div>
+      )}
+
       <h2 className="text-2xl font-bold mb-2">
         Welcome, {user?.firstName || 'Resident'}
       </h2>

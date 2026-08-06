@@ -13,6 +13,7 @@ import ResidentProfile from '../pages/resident/Profile'
 import CreateReport from '../pages/resident/CreateReport'
 import MyReports from '../pages/resident/MyReports'
 import ReportDetails from '../pages/resident/ReportDetails'
+import UpdateReport from '../pages/resident/UpdateReport'
 import ResidentSchedules from '../pages/resident/Schedules'
 
 import AdminDashboard from '../pages/admin/Dashboard'
@@ -86,6 +87,16 @@ export default function AppRoutes() {
           <ProtectedRoute role="resident">
             <DashboardLayout>
               <ReportDetails />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/resident/my-reports/:id/edit"
+        element={
+          <ProtectedRoute role="resident">
+            <DashboardLayout>
+              <UpdateReport />
             </DashboardLayout>
           </ProtectedRoute>
         }

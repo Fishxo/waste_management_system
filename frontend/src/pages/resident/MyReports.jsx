@@ -67,6 +67,17 @@ export default function MyReports() {
                     >
                       View
                     </Link>
+                    {report.status === 'pending' && (
+                      <>
+                        {' '}
+                        <Link
+                          to={`/resident/my-reports/${report.id || report._id}/edit`}
+                          className="text-indigo-600 hover:underline"
+                        >
+                          Edit
+                        </Link>
+                      </>
+                    )}
                   </td>
                 </tr>
               ))}

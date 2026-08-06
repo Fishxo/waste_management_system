@@ -31,4 +31,21 @@ router.get(
     reportController.getReportHistory
 );
 
+//report updating from the user side 
+router.put(
+    "/:id",
+    authMiddleware.authenticate,
+    reportValidation.updateReport,
+    reportController.updateReport
+
+);
+
+//making delete a report from the resident side 
+router.delete(
+    "/:id",
+    authMiddleware.authenticate,
+    reportValidation.deleteReport,
+    reportController.deleteReport
+);
+
 module.exports = router;

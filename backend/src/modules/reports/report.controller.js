@@ -123,3 +123,66 @@ console.log("USER FROM TOKEN:", req.user);
         });
     }
 };
+
+//for making update from the user side 
+exports.updateReport = async (req, res, next) => {
+    try {
+        const reportId = req.params.id;
+
+        const updatedReport = await reportService.updateReport(
+            reportId,
+            req.body,
+            req.user.id
+        );
+        res.status(200).json({
+            message: "report update successfully",
+            data: updatedReport
+        })
+    } catch (err) {
+            //validation
+        if (err.message === "report not found") {
+            return res.status(403).json({
+                message: err.message,
+            });
+        }
+
+        if (err.message === "resident is not found") {
+            return res.status(403).json({
+                message: err.message,
+            });
+        }
+
+        if (err.message === "report in progress state can not be edit") {
+            return res.status(403).json({
+                message: err.message,
+            });
+        }
+
+        if (err.message === "your account has been deactivated, you can not make update") {
+            return res.status(403).json({
+                message: err.message,
+            })
+        }
+        next(err);
+    }
+};
+
+//making delete the report from the user side 
+exports.deleteReport = async (req, res, next) => {
+    try {
+        const reportId = req.params.id;
+
+        const report = await reportService.deleteReport(
+            reportId,
+            req.user.id
+        );
+
+        res.status(200).json({
+            message: "Report deleted successfully",
+            data: report
+        });
+
+    } catch (err) {
+        next(err);
+    }
+};

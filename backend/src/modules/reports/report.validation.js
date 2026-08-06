@@ -33,3 +33,29 @@ exports.createReport = (req, res, next) => {
 
     next();
 };
+
+//updating the report from the user side 
+exports.updateReport = (req, res, next) => {
+    const { title, description } = req.body;
+
+    if (!title || !description) {
+        return res.status(400).json({
+            message: "title and description fields are required"
+        });
+    }
+    next();
+};
+
+//delete the report from the user side 
+exports.deleteReport = (req, res, next) => {
+    const { id } = req.params;
+     
+    //validation
+    if (!id) {
+        return res.status(400).json({
+            message: "this report is does not exist",
+        });
+
+    }
+    next();
+}

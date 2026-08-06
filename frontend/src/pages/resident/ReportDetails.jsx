@@ -58,6 +58,14 @@ export default function ReportDetails() {
             </p>
           )}
         </div>
+        {report.status === 'pending' && (
+          <Link
+            to={`/resident/my-reports/${report.id}/edit`}
+            className="mt-6 inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-sm font-medium"
+          >
+            Edit Report
+          </Link>
+        )}
       </div>
     </div>
   )
