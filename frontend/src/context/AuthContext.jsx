@@ -7,23 +7,32 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const stored = localStorage.getItem('user')
-    const token = localStorage.getItem('token')
-    if (stored && token) {
+    const stored =
+      localStorage.getItem('user') || localStorage.getItem('adminUser')
+    if (stored) {
       setUser(JSON.parse(stored))
     }
     setLoading(false)
   }, [])
 
   const login = (userData, token) => {
-    localStorage.setItem('user', JSON.stringify(userData))
-    localStorage.setItem('token', token)
+    if (userData.role === 'municipal_admin') {
+      localStorage.setItem('adminUser', JSON.stringify(userData))
+      localStorage.setItem('adminToken', token)
+      localStorage.setItem('user', JSON.stringify(userData))
+      localStorage.setItem('token', token)
+    } else {
+      localStorage.setItem('user', JSON.stringify(userData))
+      localStorage.setItem('token', token)
+    }
     setUser(userData)
   }
 
   const logout = () => {
     localStorage.removeItem('user')
     localStorage.removeItem('token')
+    localStorage.removeItem('adminUser')
+    localStorage.removeItem('adminToken')
     setUser(null)
   }
 

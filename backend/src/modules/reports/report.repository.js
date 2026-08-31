@@ -172,7 +172,7 @@ exports.updateReport = async (reportId, data) => {
         SET title = $1,
         description = $2
         WHERE id = $3
-        RETURNING *`
+        RETURNING *`,
         [title, description, reportId]
     );
     return result.rows[0];

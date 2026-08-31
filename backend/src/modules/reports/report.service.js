@@ -76,12 +76,14 @@ exports.updateReport = async (reportId, data, residentId) => {
     if (report.status == "in_progress") {
         throw new Error("report in progress state can not be edit");
     }
-    //check account validity
-    const resident = await reportRepository.findById(residentId)
+    const resident = await residentRepository.findResidentActiveStatus(residentId);
 
-    if (!resident.is_active) {
+    if (!resident) {
+        throw new Error("Resident not found");
+    }
+
+    if (resident.is_active === false) {
         throw new Error("your account has been deactivated, you can not make update");
-
     }
     return await reportRepository.updateReport(reportId, data);
     

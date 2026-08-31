@@ -33,8 +33,8 @@ exports.loginResident = async (email, password) => {
   const token = jwt.sign(
     {
       id: resident.id,
-      email: resident.email
-
+      email: resident.email,
+      role: "resident",
     },
     process.env.JWT_SECRET,
     {
