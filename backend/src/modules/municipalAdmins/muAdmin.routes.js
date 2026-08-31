@@ -2,6 +2,8 @@ const router = require("express").Router();
 
 const adminController = require("./muAdmin.controller");
 const adminValidation = require("./muAdmin.validation")
+const scheduleIssueController = require("../scheduleIssues/scheduleIssue.controller");
+const scheduleIssueValidation = require("../scheduleIssues/scheduleIssue.validation");
 
 const {
     authenticateMuAdmin,
@@ -72,5 +74,20 @@ router.patch(
   authenticateMuAdmin,
   adminController.activateResident
 );
+
+router.get(
+    "/schedule-issues",
+    authenticateMuAdmin,
+    scheduleIssueValidation.listIssues,
+    scheduleIssueController.getAllIssues
+);
+
+router.patch(
+    "/schedule-issues/:id/status",
+    authenticateMuAdmin,
+    scheduleIssueValidation.updateStatus,
+    scheduleIssueController.updateIssueStatus
+);
+
 module.exports = router;
 

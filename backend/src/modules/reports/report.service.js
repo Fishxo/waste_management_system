@@ -1,6 +1,12 @@
 const reportRepository = require("./report.repository");
 const residentRepository = require("../residents/resident.repository");
 
+function isLegacyScheduleIssueReport(report) {
+    return (
+        report?.description?.includes("Related collection schedule:") ?? false
+    );
+}
+
 exports.createReport = async (residentId, data) => {
     const resident = await residentRepository.findResidentActiveStatus(residentId);
 
@@ -66,7 +72,7 @@ exports.updateReport = async (reportId, data, residentId) => {
     const report = await reportRepository.findById(reportId);
 
     //validation for making update 
-    if (!report) {
+    if (!report || isLegacyScheduleIssueReport(report)) {
         throw new Error("report not found")
     }
     
@@ -94,7 +100,7 @@ exports.deleteReport = async (reportId, residentId) => {
 
     const report = await reportRepository.findById(reportId);
 
-    if (!report) {
+    if (!report || isLegacyScheduleIssueReport(report)) {
         throw new Error("Report not found");
     }
 

@@ -1,5 +1,6 @@
 const residentService = require("./resident.service");
 const scheduleService = require("../schedules/schedule.service");
+const scheduleIssueService = require("../scheduleIssues/scheduleIssue.service");
 
 exports.changeResidentPassword = async (req, res) => {
     try {
@@ -80,6 +81,31 @@ exports.getResidentSchedules = async (req, res) => {
         }
 
         console.log("GET RESIDENT SCHEDULES ERROR:", err);
+
+        res.status(500).json({
+            message: "Server error",
+        });
+    }
+};
+
+exports.getResidentScheduleIssues = async (req, res) => {
+    try {
+        if (req.user.role !== "resident") {
+            return res.status(403).json({
+                message: "Access denied",
+            });
+        }
+
+        const issues = await scheduleIssueService.getIssuesByResident(
+            req.user.id
+        );
+
+        res.status(200).json({
+            message: "Schedule issues retrieved successfully",
+            data: issues,
+        });
+    } catch (err) {
+        console.log("GET RESIDENT SCHEDULE ISSUES ERROR:", err);
 
         res.status(500).json({
             message: "Server error",

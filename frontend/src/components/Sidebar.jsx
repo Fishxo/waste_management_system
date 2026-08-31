@@ -7,6 +7,7 @@ const residentLinks = [
   { to: '/resident/create-report', label: 'Create Report', icon: '📝' },
   { to: '/resident/my-reports', label: 'My Reports', icon: '📋' },
   { to: '/resident/schedules', label: 'Schedules', icon: '🗓️' },
+  { to: '/resident/my-schedule-issues', label: 'Schedule Issues', icon: '⚠️' },
 ]
 
 const adminLinks = [
@@ -14,6 +15,7 @@ const adminLinks = [
   { to: '/admin/reports', label: 'Reports', icon: '📋' },
   { to: '/admin/residents', label: 'Residents', icon: '👥' },
   { to: '/admin/schedules', label: 'Schedules', icon: '🗓️' },
+  { to: '/admin/schedule-issues', label: 'Schedule Issues', icon: '⚠️' },
 ]
 
 export default function Sidebar() {

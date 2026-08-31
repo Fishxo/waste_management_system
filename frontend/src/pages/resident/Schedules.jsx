@@ -51,10 +51,10 @@ export default function ResidentSchedules() {
         <div className="mb-4 px-4 py-3 rounded-lg text-sm bg-green-50 text-green-700 border border-green-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <span>{successMessage}</span>
           <Link
-            to="/resident/my-reports"
+            to="/resident/my-schedule-issues"
             className="text-green-800 font-medium hover:underline"
           >
-            View my reports
+            View schedule issues
           </Link>
         </div>
       )}
@@ -128,7 +128,7 @@ export default function ResidentSchedules() {
         onClose={() => setSelectedSchedule(null)}
         onSuccess={() =>
           setSuccessMessage(
-            'Issue submitted successfully. You can track it under My Reports.'
+            'Issue submitted successfully. The municipal admin will review it.'
           )
         }
       />

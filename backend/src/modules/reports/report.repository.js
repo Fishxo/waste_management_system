@@ -1,4 +1,9 @@
 const pool = require("../../database/db");
+
+// Legacy schedule issues were saved in reports before schedule_issues existed.
+const LEGACY_SCHEDULE_ISSUE_FILTER = `
+    description NOT LIKE '%Related collection schedule:%'
+`;
 //creating the users reports for database 
 exports.createReport = async (residentId, data) => {
     const query = `
@@ -31,6 +36,7 @@ exports.getReportsByResidentId = async (residentId) => {
             created_at
         FROM reports
         WHERE resident_id = $1
+          AND ${LEGACY_SCHEDULE_ISSUE_FILTER}
         ORDER BY created_at DESC
     `;
 
@@ -50,7 +56,9 @@ exports.getReportById = async (reportId, residentId) => {
             status,
             created_at
         FROM reports
-        WHERE id = $1 AND resident_id = $2
+        WHERE id = $1
+          AND resident_id = $2
+          AND ${LEGACY_SCHEDULE_ISSUE_FILTER}
     `;
 
     const result = await pool.query(query, [reportId, residentId]);

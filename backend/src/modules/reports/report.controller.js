@@ -183,6 +183,28 @@ exports.deleteReport = async (req, res, next) => {
         });
 
     } catch (err) {
-        next(err);
+        if (err.message === "Report not found") {
+            return res.status(404).json({
+                message: err.message,
+            });
+        }
+
+        if (err.message === "You cannot delete this report") {
+            return res.status(403).json({
+                message: err.message,
+            });
+        }
+
+        if (err.message === "You cannot delete a processed report") {
+            return res.status(403).json({
+                message: err.message,
+            });
+        }
+
+        console.log("DELETE REPORT ERROR:", err);
+
+        res.status(500).json({
+            message: "Server error",
+        });
     }
 };

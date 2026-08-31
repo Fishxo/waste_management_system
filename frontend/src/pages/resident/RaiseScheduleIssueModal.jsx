@@ -44,41 +44,12 @@ function formatTime(value) {
   return `${h}:${minutes || '00'} ${suffix}`
 }
 
-function buildScheduleContext(schedule) {
-  const lines = [
-    'Related collection schedule:',
-    `- Sub-city: ${schedule.kifle_ketema || '—'}`,
-    `- Kebele: ${schedule.kebele || '—'}`,
-    `- Sefer: ${schedule.sefer || '—'}`,
-    `- Day: ${schedule.collection_day || '—'}`,
-    `- Time: ${formatTime(schedule.collection_time)}`,
-  ]
-
-  if (schedule.notes) {
-    lines.push(`- Schedule notes: ${schedule.notes}`)
+function buildDescription(issueType, customIssue) {
+  const option = ISSUE_OPTIONS.find((item) => item.value === issueType)
+  if (issueType === 'other') {
+    return customIssue.trim()
   }
-
-  return lines.join('\n')
-}
-
-function buildTitle(schedule, issueType) {
-  const day = schedule.collection_day || 'schedule'
-  const option = ISSUE_OPTIONS.find((item) => item.value === issueType)
-  const label = option?.label || 'Schedule issue'
-  return `${label} - ${day}`
-}
-
-function buildDescription(schedule, issueType, customIssue) {
-  const option = ISSUE_OPTIONS.find((item) => item.value === issueType)
-  const issueText =
-    issueType === 'other' ? customIssue.trim() : option?.detail || ''
-
-  return [
-    buildScheduleContext(schedule),
-    '',
-    'Issue reported:',
-    issueText,
-  ].join('\n')
+  return option?.detail || ''
 }
 
 function validateForm(issueType, customIssue) {
@@ -137,13 +108,12 @@ export default function RaiseScheduleIssueModal({ schedule, onClose, onSuccess }
       return
     }
 
-    const title = buildTitle(schedule, issueType)
-    const description = buildDescription(schedule, issueType, customIssue)
+    const description = buildDescription(issueType, customIssue)
 
     setSubmitting(true)
     setError('')
     try {
-      await api.post('/reports', { title, description })
+      await api.post(`/schedules/${schedule.id}/issues`, { description })
       onSuccess?.()
       onClose()
     } catch (err) {
@@ -159,8 +129,8 @@ export default function RaiseScheduleIssueModal({ schedule, onClose, onSuccess }
         <div className="p-6 border-b border-gray-100">
           <h3 className="text-xl font-bold text-gray-900">Raise Schedule Issue</h3>
           <p className="text-sm text-gray-500 mt-1">
-            Choose the issue type for this schedule. Schedule location is added
-            automatically to your report.
+            Choose the issue type for this collection schedule. The issue is
+            linked to this specific schedule.
           </p>
         </div>
 

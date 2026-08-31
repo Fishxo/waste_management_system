@@ -83,6 +83,18 @@ export default function ResidentDashboard() {
           >
             View My Reports
           </Link>
+          <Link
+            to="/resident/my-schedule-issues"
+            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded text-sm"
+          >
+            View Schedule Issues
+          </Link>
+          <Link
+            to="/resident/schedules"
+            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded text-sm"
+          >
+            View Schedules
+          </Link>
         </div>
       </div>
     </div>
