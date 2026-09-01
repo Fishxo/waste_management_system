@@ -1,24 +1,34 @@
 import { useState, useEffect } from 'react'
 import api from '../../api/axios'
 import Loading from '../../components/Loading'
-
-const daysOfWeek = [
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-  'Sunday',
-]
+import { useAuth } from '../../context/AuthContext'
 
 const emptyForm = {
   kifleKetema: '',
   kebele: '',
   sefer: '',
-  collectionDay: '',
+  collectionDate: '',
   collectionTime: '',
   notes: '',
+}
+
+function formatCollectionDate(value) {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+function toInputDate(value) {
+  if (!value) return ''
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return date.toISOString().slice(0, 10)
 }
 
 function toForm(schedule) {
@@ -26,18 +36,23 @@ function toForm(schedule) {
     kifleKetema: schedule.kifle_ketema || '',
     kebele: schedule.kebele || '',
     sefer: schedule.sefer || '',
-    collectionDay: schedule.collection_day || '',
+    collectionDate: toInputDate(schedule.collection_date),
     collectionTime: schedule.collection_time || '',
     notes: schedule.notes || '',
   }
 }
 
 export default function AdminSchedules() {
+  const { user } = useAuth()
   const [schedules, setSchedules] = useState([])
+  const [collectors, setCollectors] = useState([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [editingId, setEditingId] = useState(null)
-  const [form, setForm] = useState(emptyForm)
+  const [form, setForm] = useState({
+    ...emptyForm,
+    kifleKetema: user?.kifleKetema || '',
+  })
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
@@ -54,6 +69,12 @@ export default function AdminSchedules() {
 
   useEffect(() => {
     fetchSchedules()
+    api
+      .get('/muAdmin/collectors')
+      .then(({ data }) => {
+        setCollectors(Array.isArray(data) ? data : data.data || [])
+      })
+      .catch(() => setCollectors([]))
   }, [])
 
   useEffect(() => {
@@ -73,8 +94,21 @@ export default function AdminSchedules() {
 
   const cancelEdit = () => {
     setEditingId(null)
-    setForm(emptyForm)
+    setForm({ ...emptyForm, kifleKetema: user?.kifleKetema || '' })
     setError('')
+  }
+
+  const handleAssignCollector = async (scheduleId, collectorId) => {
+    if (!collectorId) return
+    try {
+      await api.patch(`/muAdmin/schedules/${scheduleId}/assign-collector`, {
+        collectorId: Number(collectorId),
+      })
+      setMessage('Collector assigned to schedule')
+      fetchSchedules()
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to assign collector')
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -82,14 +116,18 @@ export default function AdminSchedules() {
     setSubmitting(true)
     setError('')
     try {
+      const payload = {
+        ...form,
+        kifleKetema: user?.kifleKetema || form.kifleKetema,
+      }
       if (editingId) {
-        await api.patch(`/muAdmin/schedules/${editingId}`, form)
+        await api.patch(`/muAdmin/schedules/${editingId}`, payload)
         setMessage('Schedule updated successfully')
       } else {
-        await api.post('/muAdmin/schedules', form)
+        await api.post('/muAdmin/schedules', payload)
         setMessage('Schedule created successfully')
       }
-      setForm(emptyForm)
+      setForm({ ...emptyForm, kifleKetema: user?.kifleKetema || '' })
       setEditingId(null)
       fetchSchedules()
     } catch (err) {
@@ -107,6 +145,7 @@ export default function AdminSchedules() {
       <h2 className="text-2xl font-bold mb-2">Schedules Management</h2>
       <p className="text-gray-500 mb-6">
         {schedules.length} collection schedule(s)
+        {user?.kifleKetema ? ` in ${user.kifleKetema}` : ''}
       </p>
 
       {message && (
@@ -136,7 +175,8 @@ export default function AdminSchedules() {
                 onChange={handleChange}
                 placeholder="e.g. Bole"
                 required
-                className={inputClass}
+                readOnly={!!user?.kifleKetema}
+                className={`${inputClass} ${user?.kifleKetema ? 'bg-gray-50' : ''}`}
               />
             </div>
             <div>
@@ -167,22 +207,16 @@ export default function AdminSchedules() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Collection Day
+                Collection Date
               </label>
-              <select
-                name="collectionDay"
-                value={form.collectionDay}
+              <input
+                name="collectionDate"
+                type="date"
+                value={form.collectionDate}
                 onChange={handleChange}
                 required
                 className={inputClass}
-              >
-                <option value="">Select a day</option>
-                {daysOfWeek.map((day) => (
-                  <option key={day} value={day}>
-                    {day}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -250,10 +284,12 @@ export default function AdminSchedules() {
                 <thead>
                   <tr className="border-b bg-gray-50 text-left text-sm">
                     <th className="px-4 py-3 font-medium">Location</th>
-                    <th className="px-4 py-3 font-medium">Collection Day</th>
+                    <th className="px-4 py-3 font-medium">Collection Date</th>
                     <th className="px-4 py-3 font-medium">Time</th>
+                    <th className="px-4 py-3 font-medium">Status</th>
                     <th className="px-4 py-3 font-medium">Notes</th>
                     <th className="px-4 py-3 font-medium">Created By</th>
+                    <th className="px-4 py-3 font-medium">Collector</th>
                     <th className="px-4 py-3 font-medium">Action</th>
                   </tr>
                 </thead>
@@ -271,13 +307,63 @@ export default function AdminSchedules() {
                             .join(', ')}
                         </p>
                       </td>
-                      <td className="px-4 py-3">{schedule.collection_day}</td>
+                      <td className="px-4 py-3">
+                        {formatCollectionDate(schedule.collection_date)}
+                      </td>
                       <td className="px-4 py-3">{schedule.collection_time}</td>
+                      <td className="px-4 py-3">
+                        <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800">
+                          {(schedule.status || 'scheduled').replace('_', ' ')}
+                        </span>
+                      </td>
                       <td className="px-4 py-3 max-w-xs truncate">
                         {schedule.notes || '—'}
                       </td>
                       <td className="px-4 py-3 text-gray-500">
                         {schedule.created_by || '—'}
+                      </td>
+                      <td className="px-4 py-3">
+                        {schedule.collector_name ? (
+                          <div>
+                            <span className="text-sm block">
+                              {schedule.collector_name}
+                            </span>
+                            {schedule.status !== 'completed' && (
+                              <select
+                                defaultValue=""
+                                onChange={(e) =>
+                                  handleAssignCollector(
+                                    schedule.id,
+                                    e.target.value
+                                  )
+                                }
+                                className="mt-1 border border-gray-300 rounded px-2 py-1 text-xs w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                              >
+                                <option value="">Reassign...</option>
+                                {collectors.map((c) => (
+                                  <option key={c.id} value={c.id}>
+                                    {c.full_name}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+                          </div>
+                        ) : (
+                          <select
+                            defaultValue=""
+                            onChange={(e) =>
+                              handleAssignCollector(schedule.id, e.target.value)
+                            }
+                            className="border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                          >
+                            <option value="">Assign...</option>
+                            {collectors.map((c) => (
+                              <option key={c.id} value={c.id}>
+                                {c.full_name}
+                              </option>
+                            ))}
+                          </select>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <button

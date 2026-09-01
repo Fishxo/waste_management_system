@@ -51,10 +51,8 @@ exports.createIssue = async (residentId, scheduleId, description) => {
     return issue;
 };
 
-exports.getAllIssues = async (status) => {
-    const issues = await scheduleIssueRepository.getAllIssues(status);
-
-    return issues;
+exports.getAllIssues = async (status, kifleKetema) => {
+    return await scheduleIssueRepository.getAllIssues(status, kifleKetema);
 };
 
 exports.getIssuesByResident = async (residentId) => {

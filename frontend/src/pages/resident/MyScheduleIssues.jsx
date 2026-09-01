@@ -103,7 +103,10 @@ export default function MyScheduleIssues() {
                     Issue #{issue.id}
                   </p>
                   <p className="text-lg font-bold text-gray-900 mt-1">
-                    {issue.collection_day} at {formatTime(issue.collection_time)}
+                    {issue.collection_date
+                      ? new Date(issue.collection_date).toLocaleDateString()
+                      : '—'}{' '}
+                    at {formatTime(issue.collection_time)}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
                     {issue.kifle_ketema}, Kebele {issue.kebele || '—'},{' '}

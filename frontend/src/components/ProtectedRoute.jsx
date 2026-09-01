@@ -20,5 +20,14 @@ export default function ProtectedRoute({ children, role }) {
     }
   }
 
+  if (role === 'system_admin') {
+    const systemAdminToken = localStorage.getItem('systemAdminToken')
+    const tokenRole = getJwtPayload(systemAdminToken)?.role
+
+    if (tokenRole !== 'system_admin') {
+      return <Navigate to="/system-admin/login" replace />
+    }
+  }
+
   return children
 }

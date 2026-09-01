@@ -141,7 +141,10 @@ export default function RaiseScheduleIssueModal({ schedule, onClose, onSuccess }
             </p>
             <p>
               <span className="text-gray-400">Day & time:</span>{' '}
-              {schedule.collection_day} at {formatTime(schedule.collection_time)}
+              {schedule.collection_date
+                ? new Date(schedule.collection_date).toLocaleDateString()
+                : '—'}{' '}
+              at {formatTime(schedule.collection_time)}
             </p>
             <p>
               <span className="text-gray-400">Location:</span>{' '}

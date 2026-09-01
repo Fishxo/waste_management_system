@@ -1,12 +1,9 @@
-
-
-// validating schedule creation
 exports.createSchedule = (req, res, next) => {
     const {
         kifleKetema,
         kebele,
         sefer,
-        collectionDay,
+        collectionDate,
         collectionTime,
         notes,
     } = req.body;
@@ -15,7 +12,7 @@ exports.createSchedule = (req, res, next) => {
         !kifleKetema ||
         !kebele ||
         !sefer ||
-        !collectionDay ||
+        !collectionDate ||
         !collectionTime
     ) {
         return res.status(400).json({
@@ -26,20 +23,19 @@ exports.createSchedule = (req, res, next) => {
     next();
 };
 
-//making update schedules from the admin 
 exports.updateSchedule = (req, res, next) => {
-    const { kifleKetema, kebele, sefer, collectionDay, collectionTime } = req.body;
+    const { kifleKetema, kebele, sefer, collectionDate, collectionTime } =
+        req.body;
 
-    //validation
     if (
         !kifleKetema ||
         !sefer ||
-        !collectionDay ||
+        !collectionDate ||
         !collectionTime
     ) {
         return res.status(400).json({
-            message : "all field is requied should be provided"
-        })
+            message: "All required fields must be provided",
+        });
     }
     next();
-} 
+};

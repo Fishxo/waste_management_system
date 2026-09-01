@@ -1,41 +1,51 @@
 const scheduleRepository = require("./schedule.repository");
+const notificationService = require("../notifications/notification.service");
 
-// create schedule
 exports.createSchedule = async (adminId, data) => {
-
     const schedule = await scheduleRepository.createSchedule(
         adminId,
         data
     );
 
+    try {
+        await notificationService.notifyScheduleArea(schedule, "created");
+    } catch (err) {
+        console.log("SCHEDULE CREATE NOTIFICATION ERROR:", err.message);
+    }
+
     return schedule;
 };
 
-// get all schedules
-exports.getAllSchedules = async () => {
-
-    const schedules = await scheduleRepository.getAllSchedules();
-
-    return schedules;
+exports.getAllSchedules = async (kifleKetema) => {
+    return await scheduleRepository.getAllSchedules(kifleKetema);
 };
 
-// get schedules for a resident's sub-city
 exports.getSchedulesForResident = async (kifleKetema) => {
-    const schedules = await scheduleRepository.getSchedulesByArea(kifleKetema);
-
-    return schedules;
+    return await scheduleRepository.getSchedulesByArea(kifleKetema);
 };
 
-//updating the schedules 
-exports.updateSchedule = async (scheduleId,data) => {
+exports.getSchedulesForBusinessOwner = async (kifleKetema, kebele) => {
+    return await scheduleRepository.getSchedulesByLocation(
+        kifleKetema,
+        kebele
+    );
+};
+
+exports.updateSchedule = async (scheduleId, data) => {
     const schedule = await scheduleRepository.updateSchedule(
         scheduleId,
         data
     );
 
     if (!schedule) {
-        throw new Error("Schedule not found")
+        throw new Error("Schedule not found");
     }
-    
-    return schedule;    
-}
+
+    try {
+        await notificationService.notifyScheduleArea(schedule, "updated");
+    } catch (err) {
+        console.log("SCHEDULE UPDATE NOTIFICATION ERROR:", err.message);
+    }
+
+    return schedule;
+};

@@ -7,7 +7,7 @@ exports.findScheduleById = async (scheduleId) => {
             kifle_ketema,
             kebele,
             sefer,
-            collection_day,
+            collection_date,
             collection_time,
             notes,
             created_at
@@ -76,7 +76,7 @@ exports.createIssue = async (scheduleId, residentId, description) => {
     return result.rows[0];
 };
 
-exports.getAllIssues = async (status) => {
+exports.getAllIssues = async (status, kifleKetema) => {
     let query = `
         SELECT
             si.id,
@@ -92,7 +92,7 @@ exports.getAllIssues = async (status) => {
             s.kifle_ketema,
             s.kebele,
             s.sefer,
-            s.collection_day,
+            s.collection_date,
             s.collection_time
         FROM schedule_issues si
         JOIN schedules s
@@ -102,10 +102,20 @@ exports.getAllIssues = async (status) => {
     `;
 
     const values = [];
+    const conditions = [];
+
+    if (kifleKetema) {
+        conditions.push(`s.kifle_ketema = $${values.length + 1}`);
+        values.push(kifleKetema);
+    }
 
     if (status) {
-        query += ` WHERE si.status = $1`;
+        conditions.push(`si.status = $${values.length + 1}`);
         values.push(status);
+    }
+
+    if (conditions.length) {
+        query += ` WHERE ${conditions.join(" AND ")}`;
     }
 
     query += ` ORDER BY si.created_at DESC`;
@@ -126,7 +136,7 @@ exports.getIssuesByResidentId = async (residentId) => {
             s.kifle_ketema,
             s.kebele,
             s.sefer,
-            s.collection_day,
+            s.collection_date,
             s.collection_time
         FROM schedule_issues si
         JOIN schedules s

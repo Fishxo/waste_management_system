@@ -24,6 +24,7 @@ exports.login = async (email, password) => {
         {
             id: admin.id,
             role: "municipal_admin",
+            kifleKetema: admin.kifle_ketema || null,
         },
         process.env.JWT_SECRET,
         {
@@ -35,11 +36,11 @@ exports.login = async (email, password) => {
         id: admin.id,
         username: admin.username,
         email: admin.email,
+        kifleKetema: admin.kifle_ketema || null,
         token,
     };
 };
 
-//update the report status 
 exports.updateReportStatus = async (reportId, status, adminId) => {
     const report = await reportRepository.updateReportStatus(
         reportId,
@@ -54,16 +55,12 @@ exports.updateReportStatus = async (reportId, status, adminId) => {
     return report;
 };
 
-//getting whole reports including status
-exports.getAllReports = async (status) => {
-    const reports = await adminRepository.getAllReports(status);
-
-    return reports;
+exports.getAllReports = async (status, kifleKetema) => {
+    return await adminRepository.getAllReports(status, kifleKetema);
 };
 
-//get admin dashboard numbers 
-exports.getDashboardStatistics = async () => {
-    const statistics = await adminRepository.getDashboardStatistics();
+exports.getDashboardStatistics = async (kifleKetema) => {
+    const statistics = await adminRepository.getDashboardStatistics(kifleKetema);
 
     return {
         totalResidents: Number(statistics.total_residents),
@@ -74,34 +71,66 @@ exports.getDashboardStatistics = async () => {
     };
 };
 
-//getting the whole residnets 
-exports.getAllResidents = async () => {
-    return await adminRepository.getAllResidents();
+exports.getAllResidents = async (kifleKetema) => {
+    return await adminRepository.getAllResidents(kifleKetema);
 };
 
-//getting the residnet by id 
-exports.getResidentById = async (id) => {
-    return await adminRepository.getResidentById(id);
+exports.getResidentById = async (id, kifleKetema) => {
+    return await adminRepository.getResidentById(id, kifleKetema);
 };
 
-//deleting the resident from the admin dashbourd 
-exports.deleteResident = async (id) => {
-  const resident = await adminRepository.deleteResidentById(id);
+exports.deleteResident = async (id, kifleKetema) => {
+    const resident = await adminRepository.deleteResidentById(id, kifleKetema);
 
-  if (!resident) {
-    throw new Error("Resident not found");
-  }
+    if (!resident) {
+        throw new Error("Resident not found");
+    }
 
-  return resident;
+    return resident;
 };
 
-//making the residnet account deactivate 
-exports.setResidentActive = async (id, isActive) => {
-  const resident = await adminRepository.updateResidentActive(id, isActive);
+exports.setResidentActive = async (id, isActive, kifleKetema) => {
+    const resident = await adminRepository.updateResidentActive(
+        id,
+        isActive,
+        kifleKetema
+    );
 
-  if (!resident) {
-    throw new Error("Resident not found");
-  }
+    if (!resident) {
+        throw new Error("Resident not found");
+    }
 
-  return resident;
+    return resident;
+};
+
+exports.getAllBusinessOwners = async (kifleKetema) => {
+    return await adminRepository.getAllBusinessOwners(kifleKetema);
+};
+
+exports.getBusinessOwnerById = async (id, kifleKetema) => {
+    return await adminRepository.getBusinessOwnerById(id, kifleKetema);
+};
+
+exports.deleteBusinessOwner = async (id, kifleKetema) => {
+    const owner = await adminRepository.deleteBusinessOwnerById(id, kifleKetema);
+
+    if (!owner) {
+        throw new Error("Business owner not found");
+    }
+
+    return owner;
+};
+
+exports.setBusinessOwnerActive = async (id, isActive, kifleKetema) => {
+    const owner = await adminRepository.updateBusinessOwnerActive(
+        id,
+        isActive,
+        kifleKetema
+    );
+
+    if (!owner) {
+        throw new Error("Business owner not found");
+    }
+
+    return owner;
 };

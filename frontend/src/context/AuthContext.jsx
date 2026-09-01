@@ -8,7 +8,9 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const stored =
-      localStorage.getItem('user') || localStorage.getItem('adminUser')
+      localStorage.getItem('systemAdminUser') ||
+      localStorage.getItem('user') ||
+      localStorage.getItem('adminUser')
     if (stored) {
       setUser(JSON.parse(stored))
     }
@@ -16,7 +18,10 @@ export function AuthProvider({ children }) {
   }, [])
 
   const login = (userData, token) => {
-    if (userData.role === 'municipal_admin') {
+    if (userData.role === 'system_admin') {
+      localStorage.setItem('systemAdminUser', JSON.stringify(userData))
+      localStorage.setItem('systemAdminToken', token)
+    } else if (userData.role === 'municipal_admin') {
       localStorage.setItem('adminUser', JSON.stringify(userData))
       localStorage.setItem('adminToken', token)
       localStorage.setItem('user', JSON.stringify(userData))
@@ -33,6 +38,8 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('token')
     localStorage.removeItem('adminUser')
     localStorage.removeItem('adminToken')
+    localStorage.removeItem('systemAdminUser')
+    localStorage.removeItem('systemAdminToken')
     setUser(null)
   }
 

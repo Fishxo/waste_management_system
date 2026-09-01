@@ -6,7 +6,10 @@ import Navbar from '../components/Navbar'
 import Welcome from '../pages/Welcome'
 import ResidentLogin from '../pages/auth/ResidentLogin'
 import ResidentRegister from '../pages/auth/ResidentRegister'
+import BusinessOwnerLogin from '../pages/auth/BusinessOwnerLogin'
+import BusinessOwnerRegister from '../pages/auth/BusinessOwnerRegister'
 import AdminLogin from '../pages/auth/AdminLogin'
+import SystemAdminLogin from '../pages/auth/SystemAdminLogin'
 
 import ResidentDashboard from '../pages/resident/Dashboard'
 import ResidentProfile from '../pages/resident/Profile'
@@ -19,9 +22,28 @@ import MyScheduleIssues from '../pages/resident/MyScheduleIssues'
 
 import AdminDashboard from '../pages/admin/Dashboard'
 import AdminReports from '../pages/admin/Reports'
+import AdminOperationalReports from '../pages/admin/OperationalReports'
 import AdminResidents from '../pages/admin/Residents'
+import AdminBusinessOwners from '../pages/admin/BusinessOwners'
 import AdminSchedules from '../pages/admin/Schedules'
 import AdminScheduleIssues from '../pages/admin/ScheduleIssues'
+import AdminOnDemandRequests from '../pages/admin/OnDemandRequests'
+import AdminCollectors from '../pages/admin/Collectors'
+import CollectorLogin from '../pages/auth/CollectorLogin'
+import CollectorDashboard from '../pages/collector/Dashboard'
+import BusinessDashboard from '../pages/business/Dashboard'
+import BusinessProfile from '../pages/business/Profile'
+import BusinessSchedules from '../pages/business/Schedules'
+import CreateOnDemandRequest from '../pages/business/CreateOnDemandRequest'
+import MyOnDemandRequests from '../pages/business/MyOnDemandRequests'
+import NotificationsPage from '../pages/shared/Notifications'
+import AdminSendNotifications from '../pages/admin/SendNotifications'
+import AdminFeedback from '../pages/admin/Feedback'
+import FeedbackPage from '../pages/shared/Feedback'
+import SystemAdminDashboard from '../pages/system-admin/Dashboard'
+import SystemAdminStaff from '../pages/system-admin/Staff'
+import SystemAdminUsers from '../pages/system-admin/Users'
+import SystemAdminBackup from '../pages/system-admin/BackupRestore'
 
 function DashboardLayout({ children }) {
   return (
@@ -41,7 +63,11 @@ export default function AppRoutes() {
       <Route path="/" element={<Welcome />} />
       <Route path="/resident/login" element={<ResidentLogin />} />
       <Route path="/resident/register" element={<ResidentRegister />} />
+      <Route path="/business/login" element={<BusinessOwnerLogin />} />
+      <Route path="/business/register" element={<BusinessOwnerRegister />} />
+      <Route path="/collector/login" element={<CollectorLogin />} />
       <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/system-admin/login" element={<SystemAdminLogin />} />
 
       <Route
         path="/resident/dashboard"
@@ -123,6 +149,118 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/resident/notifications"
+        element={
+          <ProtectedRoute role="resident">
+            <DashboardLayout>
+              <NotificationsPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/resident/feedback"
+        element={
+          <ProtectedRoute role="resident">
+            <DashboardLayout>
+              <FeedbackPage accent="indigo" />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/business/dashboard"
+        element={
+          <ProtectedRoute role="business_owner">
+            <DashboardLayout>
+              <BusinessDashboard />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/business/profile"
+        element={
+          <ProtectedRoute role="business_owner">
+            <DashboardLayout>
+              <BusinessProfile />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/business/schedules"
+        element={
+          <ProtectedRoute role="business_owner">
+            <DashboardLayout>
+              <BusinessSchedules />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/business/create-request"
+        element={
+          <ProtectedRoute role="business_owner">
+            <DashboardLayout>
+              <CreateOnDemandRequest />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/business/my-requests"
+        element={
+          <ProtectedRoute role="business_owner">
+            <DashboardLayout>
+              <MyOnDemandRequests />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/business/notifications"
+        element={
+          <ProtectedRoute role="business_owner">
+            <DashboardLayout>
+              <NotificationsPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/business/feedback"
+        element={
+          <ProtectedRoute role="business_owner">
+            <DashboardLayout>
+              <FeedbackPage accent="amber" />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/collector/dashboard"
+        element={
+          <ProtectedRoute role="collector">
+            <DashboardLayout>
+              <CollectorDashboard />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/collector/notifications"
+        element={
+          <ProtectedRoute role="collector">
+            <DashboardLayout>
+              <NotificationsPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
 
       <Route
         path="/admin/dashboard"
@@ -145,11 +283,31 @@ export default function AppRoutes() {
         }
       />
       <Route
+        path="/admin/operational-reports"
+        element={
+          <ProtectedRoute role="municipal_admin">
+            <DashboardLayout>
+              <AdminOperationalReports />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/admin/residents"
         element={
           <ProtectedRoute role="municipal_admin">
             <DashboardLayout>
               <AdminResidents />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/business-owners"
+        element={
+          <ProtectedRoute role="municipal_admin">
+            <DashboardLayout>
+              <AdminBusinessOwners />
             </DashboardLayout>
           </ProtectedRoute>
         }
@@ -170,6 +328,87 @@ export default function AppRoutes() {
           <ProtectedRoute role="municipal_admin">
             <DashboardLayout>
               <AdminScheduleIssues />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/on-demand-requests"
+        element={
+          <ProtectedRoute role="municipal_admin">
+            <DashboardLayout>
+              <AdminOnDemandRequests />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/collectors"
+        element={
+          <ProtectedRoute role="municipal_admin">
+            <DashboardLayout>
+              <AdminCollectors />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/send-notifications"
+        element={
+          <ProtectedRoute role="municipal_admin">
+            <DashboardLayout>
+              <AdminSendNotifications />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/feedback"
+        element={
+          <ProtectedRoute role="municipal_admin">
+            <DashboardLayout>
+              <AdminFeedback />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/system-admin/dashboard"
+        element={
+          <ProtectedRoute role="system_admin">
+            <DashboardLayout>
+              <SystemAdminDashboard />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/system-admin/staff"
+        element={
+          <ProtectedRoute role="system_admin">
+            <DashboardLayout>
+              <SystemAdminStaff />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/system-admin/users"
+        element={
+          <ProtectedRoute role="system_admin">
+            <DashboardLayout>
+              <SystemAdminUsers />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/system-admin/backup"
+        element={
+          <ProtectedRoute role="system_admin">
+            <DashboardLayout>
+              <SystemAdminBackup />
             </DashboardLayout>
           </ProtectedRoute>
         }

@@ -1,5 +1,10 @@
 import axios from 'axios'
-import { getTokenForRequest, isAdminApiUrl } from '../utils/authToken'
+import {
+  getTokenForRequest,
+  isAdminApiUrl,
+  isSystemAdminApiUrl,
+  clearAuthStorage,
+} from '../utils/authToken'
 
 const api = axios.create({
   baseURL: 'http://localhost:3000/api',
@@ -22,7 +27,10 @@ api.interceptors.response.use(
     const isLoginRequest = /\/login$/.test(url)
 
     if (error.response?.status === 401 && wasAuthenticated && !isLoginRequest) {
-      if (isAdminApiUrl(url)) {
+      if (isSystemAdminApiUrl(url)) {
+        localStorage.removeItem('systemAdminToken')
+        localStorage.removeItem('systemAdminUser')
+      } else if (isAdminApiUrl(url)) {
         localStorage.removeItem('adminToken')
         localStorage.removeItem('adminUser')
       } else {

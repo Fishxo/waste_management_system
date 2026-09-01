@@ -4,6 +4,17 @@ import api from '../../api/axios'
 import Loading from '../../components/Loading'
 import RaiseScheduleIssueModal from './RaiseScheduleIssueModal'
 
+function formatDate(value) {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleDateString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
 function formatTime(value) {
   if (!value) return '—'
   const [hours, minutes] = String(value).split(':')
@@ -86,7 +97,7 @@ export default function ResidentSchedules() {
             >
               <div className="flex items-center justify-between mb-3">
                 <span className="inline-block px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-xs font-semibold">
-                  {schedule.collection_day}
+                  {formatDate(schedule.collection_date)}
                 </span>
                 <span className="text-lg font-bold text-gray-900">
                   {formatTime(schedule.collection_time)}

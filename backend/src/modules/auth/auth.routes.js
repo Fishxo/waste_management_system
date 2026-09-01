@@ -11,11 +11,23 @@ router.post(
     authController.registerResident
 );
 
+router.post(
+    "/register/business-owner",
+    authValidation.registerBusinessOwner,
+    authController.registerBusinessOwner
+);
+
 //making a login logic
 router.post(
     "/login",
     authValidation.loginResident,
     authController.loginResident
+);
+
+router.post(
+    "/login/business-owner",
+    authValidation.loginBusinessOwner,
+    authController.loginBusinessOwner
 );
 
 //for the middleware protection

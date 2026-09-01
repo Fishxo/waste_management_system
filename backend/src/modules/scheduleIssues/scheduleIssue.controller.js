@@ -1,4 +1,5 @@
 const scheduleIssueService = require("./scheduleIssue.service");
+const { getAdminKifleKetema } = require("../../utils/adminScope");
 
 exports.createIssue = async (req, res) => {
     try {
@@ -58,8 +59,9 @@ exports.createIssue = async (req, res) => {
 exports.getAllIssues = async (req, res) => {
     try {
         const { status } = req.query;
+        const kifleKetema = getAdminKifleKetema(req);
 
-        const issues = await scheduleIssueService.getAllIssues(status);
+        const issues = await scheduleIssueService.getAllIssues(status, kifleKetema);
 
         res.status(200).json({
             message: "Schedule issues retrieved successfully",

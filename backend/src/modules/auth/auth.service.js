@@ -14,11 +14,13 @@ exports.registerResident = async (data) => {
   return await authRepository.createResident(residentData);
 };
 
-//making a login function 
-exports.loginResident = async (email, password) => {
-  const resident = await authRepository.findResidentByEmail(email);
+const { normalizeIdentifier } = require("../../utils/authIdentifier");
 
-  //validation
+exports.loginResident = async (identifier, password) => {
+  const resident = await authRepository.findResidentByIdentifier(
+    normalizeIdentifier(identifier)
+  );
+
   if (!resident) {
     throw new Error("Invalid email or password");
   }
@@ -45,4 +47,55 @@ exports.loginResident = async (email, password) => {
     resident,
     token
   };
-}
+};
+
+exports.registerBusinessOwner = async (data) => {
+  const hashedPassword = await bcrypt.hash(data.password, 10);
+
+  const ownerData = {
+    ...data,
+    password: hashedPassword,
+  };
+
+  return await authRepository.createBusinessOwner(ownerData);
+};
+
+exports.loginBusinessOwner = async (identifier, password) => {
+  const owner = await authRepository.findBusinessOwnerByIdentifier(
+    normalizeIdentifier(identifier)
+  );
+
+  if (!owner) {
+    throw new Error("Invalid email or password");
+  }
+
+  if (owner.is_active === false) {
+    throw new Error("Your account has been deactivated");
+  }
+
+  const isPasswordCorrect = await bcrypt.compare(
+    password,
+    owner.password_hash
+  );
+
+  if (!isPasswordCorrect) {
+    throw new Error("Invalid email or password");
+  }
+
+  const token = jwt.sign(
+    {
+      id: owner.business_id,
+      email: owner.email,
+      role: "business_owner",
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "1d",
+    }
+  );
+
+  return {
+    owner,
+    token,
+  };
+};

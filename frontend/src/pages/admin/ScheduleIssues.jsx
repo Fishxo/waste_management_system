@@ -177,7 +177,11 @@ export default function AdminScheduleIssues() {
                     </p>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <p className="font-medium">{issue.collection_day}</p>
+                    <p className="font-medium">
+                      {issue.collection_date
+                        ? new Date(issue.collection_date).toLocaleDateString()
+                        : '—'}
+                    </p>
                     <p className="text-xs text-gray-500">
                       {formatTime(issue.collection_time)}
                     </p>

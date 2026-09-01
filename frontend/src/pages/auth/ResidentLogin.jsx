@@ -4,7 +4,7 @@ import api from '../../api/axios'
 import { useAuth } from '../../context/AuthContext'
 
 export default function ResidentLogin() {
-  const [form, setForm] = useState({ email: '', password: '' })
+  const [form, setForm] = useState({ identifier: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
@@ -49,10 +49,10 @@ export default function ResidentLogin() {
         )}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <input
-            name="email"
-            type="email"
-            placeholder="Email"
-            value={form.email}
+            name="identifier"
+            type="text"
+            placeholder="Email or phone number"
+            value={form.identifier}
             onChange={handleChange}
             required
             className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"

@@ -14,27 +14,49 @@ export function isAdminApiUrl(url = '') {
   return url.includes('/muAdmin')
 }
 
+export function isSystemAdminApiUrl(url = '') {
+  return url.includes('/systemAdmin')
+}
+
 export function getTokenForRequest(url = '') {
   const residentToken = localStorage.getItem('token')
   const adminToken = localStorage.getItem('adminToken')
+  const systemAdminToken = localStorage.getItem('systemAdminToken')
+
+  if (isSystemAdminApiUrl(url)) {
+    if (
+      systemAdminToken &&
+      getJwtPayload(systemAdminToken)?.role === 'system_admin'
+    ) {
+      return systemAdminToken
+    }
+    return systemAdminToken || adminToken || residentToken
+  }
 
   if (isAdminApiUrl(url)) {
     if (adminToken && getJwtPayload(adminToken)?.role === 'municipal_admin') {
       return adminToken
     }
 
-    if (residentToken && getJwtPayload(residentToken)?.role === 'municipal_admin') {
+    if (
+      residentToken &&
+      getJwtPayload(residentToken)?.role === 'municipal_admin'
+    ) {
       return residentToken
     }
 
     return adminToken || residentToken
   }
 
-  if (residentToken && getJwtPayload(residentToken)?.role !== 'municipal_admin') {
+  if (
+    residentToken &&
+    getJwtPayload(residentToken)?.role !== 'municipal_admin' &&
+    getJwtPayload(residentToken)?.role !== 'system_admin'
+  ) {
     return residentToken
   }
 
-  return residentToken || adminToken
+  return residentToken || adminToken || systemAdminToken
 }
 
 export function clearAuthStorage() {
@@ -42,4 +64,6 @@ export function clearAuthStorage() {
   localStorage.removeItem('user')
   localStorage.removeItem('adminToken')
   localStorage.removeItem('adminUser')
+  localStorage.removeItem('systemAdminToken')
+  localStorage.removeItem('systemAdminUser')
 }

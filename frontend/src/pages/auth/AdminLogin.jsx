@@ -31,6 +31,7 @@ export default function AdminLogin() {
           id: res.id,
           username: res.username,
           email: res.email,
+          kifleKetema: res.kifleKetema,
           role: 'municipal_admin',
         },
         res.token
