@@ -57,13 +57,13 @@ export default function CreateOnDemandRequest() {
           </p>
         )}
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          <LocationMapPicker
-            latitude={latitude}
-            longitude={longitude}
-            onLocationChange={handleLocationChange}
-          />
+        <LocationMapPicker
+          latitude={latitude}
+          longitude={longitude}
+          onLocationChange={handleLocationChange}
+        />
 
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5 mt-5">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Description (optional)

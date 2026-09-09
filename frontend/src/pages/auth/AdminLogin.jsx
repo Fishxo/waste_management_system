@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import api from '../../api/axios'
 import { useAuth } from '../../context/AuthContext'
+import PasswordInput from '../../components/PasswordInput'
 
 export default function AdminLogin() {
   const [form, setForm] = useState({ email: '', password: '' })
@@ -73,14 +74,10 @@ export default function AdminLogin() {
             required
             className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
           />
-          <input
-            name="password"
-            type="password"
-            placeholder="Password"
+          <PasswordInput
             value={form.password}
             onChange={handleChange}
-            required
-            className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="focus:ring-indigo-400"
           />
           <button
             type="submit"
@@ -90,11 +87,6 @@ export default function AdminLogin() {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
-        <p className="text-sm text-center mt-4">
-          <Link to="/resident/login" className="text-indigo-600 hover:underline">
-            Resident Login
-          </Link>
-        </p>
       </div>
     </div>
   )

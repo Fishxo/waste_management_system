@@ -32,24 +32,6 @@ export default function Welcome() {
           >
             Business Owner Register
           </Link>
-          <Link
-            to="/collector/login"
-            className="bg-teal-600 hover:bg-teal-500 text-white px-6 py-3 rounded-lg font-medium transition"
-          >
-            Collector Login
-          </Link>
-          <Link
-            to="/admin/login"
-            className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition"
-          >
-            Municipal Admin Login
-          </Link>
-          <Link
-            to="/system-admin/login"
-            className="bg-violet-700 hover:bg-violet-600 text-white px-6 py-3 rounded-lg font-medium transition"
-          >
-            System Admin Login
-          </Link>
         </div>
       </div>
     </div>

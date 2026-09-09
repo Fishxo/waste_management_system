@@ -4,6 +4,7 @@ import Sidebar from '../components/Sidebar'
 import Navbar from '../components/Navbar'
 
 import Welcome from '../pages/Welcome'
+import StaffPortal from '../pages/StaffPortal'
 import ResidentLogin from '../pages/auth/ResidentLogin'
 import ResidentRegister from '../pages/auth/ResidentRegister'
 import BusinessOwnerLogin from '../pages/auth/BusinessOwnerLogin'
@@ -61,12 +62,16 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Welcome />} />
+      <Route path="/staff" element={<StaffPortal />} />
       <Route path="/resident/login" element={<ResidentLogin />} />
       <Route path="/resident/register" element={<ResidentRegister />} />
       <Route path="/business/login" element={<BusinessOwnerLogin />} />
       <Route path="/business/register" element={<BusinessOwnerRegister />} />
+      <Route path="/collector" element={<CollectorLogin />} />
       <Route path="/collector/login" element={<CollectorLogin />} />
+      <Route path="/muAdmin" element={<AdminLogin />} />
       <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/systemAdmin" element={<SystemAdminLogin />} />
       <Route path="/system-admin/login" element={<SystemAdminLogin />} />
 
       <Route

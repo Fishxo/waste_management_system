@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import api from '../../api/axios'
 import { useAuth } from '../../context/AuthContext'
+import PasswordInput from '../../components/PasswordInput'
 
 export default function CollectorLogin() {
   const [form, setForm] = useState({ identifier: '', password: '' })
@@ -56,14 +57,10 @@ export default function CollectorLogin() {
             required
             className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
           />
-          <input
-            name="password"
-            type="password"
-            placeholder="Password"
+          <PasswordInput
             value={form.password}
             onChange={handleChange}
-            required
-            className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+            className="focus:ring-teal-400"
           />
           <button
             type="submit"
@@ -75,11 +72,6 @@ export default function CollectorLogin() {
         </form>
         <p className="text-sm text-center mt-4 text-gray-500">
           Accounts are created by municipal administrators.
-        </p>
-        <p className="text-sm text-center mt-2">
-          <Link to="/" className="text-gray-500 hover:underline">
-            Back to home
-          </Link>
         </p>
       </div>
     </div>

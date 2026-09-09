@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../../api/axios'
 import { useAuth } from '../../context/AuthContext'
+import PasswordInput from '../../components/PasswordInput'
 
 export default function BusinessOwnerLogin() {
   const [form, setForm] = useState({ identifier: '', password: '' })
@@ -62,14 +63,10 @@ export default function BusinessOwnerLogin() {
             required
             className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
           />
-          <input
-            name="password"
-            type="password"
-            placeholder="Password"
+          <PasswordInput
             value={form.password}
             onChange={handleChange}
-            required
-            className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+            className="focus:ring-amber-400"
           />
           <button
             type="submit"
