@@ -4,7 +4,7 @@ export default function PasswordInput({ value, onChange, className = '' }) {
   const [show, setShow] = useState(false)
 
   return (
-    <div className={`relative ${className}`}>
+    <div className="relative">
       <input
         name="password"
         type={show ? 'text' : 'password'}
@@ -12,7 +12,7 @@ export default function PasswordInput({ value, onChange, className = '' }) {
         value={value}
         onChange={onChange}
         required
-        className="border border-gray-300 rounded px-3 py-2 pr-10 text-sm w-full focus:outline-none focus:ring-2"
+        className={`border border-gray-300 rounded px-3 py-2 pr-10 text-sm w-full focus:outline-none focus:ring-2 ${className}`}
       />
       <button
         type="button"

@@ -12,6 +12,13 @@ router.get(
 );
 
 router.patch(
+    "/password",
+    authMiddleware.authenticate,
+    collectorValidation.changePassword,
+    collectorController.changePassword
+);
+
+router.patch(
     "/schedules/:id/status",
     authMiddleware.authenticate,
     collectorValidation.updateCollectionStatus,

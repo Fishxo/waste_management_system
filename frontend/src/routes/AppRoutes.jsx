@@ -32,6 +32,7 @@ import AdminOnDemandRequests from '../pages/admin/OnDemandRequests'
 import AdminCollectors from '../pages/admin/Collectors'
 import CollectorLogin from '../pages/auth/CollectorLogin'
 import CollectorDashboard from '../pages/collector/Dashboard'
+import CollectorChangePassword from '../pages/collector/ChangePassword'
 import BusinessDashboard from '../pages/business/Dashboard'
 import BusinessProfile from '../pages/business/Profile'
 import BusinessSchedules from '../pages/business/Schedules'
@@ -252,6 +253,16 @@ export default function AppRoutes() {
           <ProtectedRoute role="collector">
             <DashboardLayout>
               <CollectorDashboard />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/collector/change-password"
+        element={
+          <ProtectedRoute role="collector">
+            <DashboardLayout>
+              <CollectorChangePassword />
             </DashboardLayout>
           </ProtectedRoute>
         }

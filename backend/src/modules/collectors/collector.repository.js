@@ -65,6 +65,28 @@ exports.findCollectorById = async (id) => {
     return result.rows[0];
 };
 
+exports.findCollectorPasswordById = async (id) => {
+    const query = `
+        SELECT password_hash
+        FROM collectors
+        WHERE id = $1
+    `;
+
+    const result = await pool.query(query, [id]);
+
+    return result.rows[0] || null;
+};
+
+exports.updateCollectorPassword = async (id, passwordHash) => {
+    const query = `
+        UPDATE collectors
+        SET password_hash = $1
+        WHERE id = $2
+    `;
+
+    await pool.query(query, [passwordHash, id]);
+};
+
 exports.getAllCollectors = async (kifleKetema) => {
     let query = `
         SELECT id, full_name, phone_number, email, kifle_ketema, is_active, created_at

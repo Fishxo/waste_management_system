@@ -41,6 +41,24 @@ exports.createCollector = (req, res, next) => {
     next();
 };
 
+exports.changePassword = (req, res, next) => {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+        return res.status(400).json({
+            message: "Current password and new password are required",
+        });
+    }
+
+    if (newPassword.length < 6) {
+        return res.status(400).json({
+            message: "New password should be at least 6 characters",
+        });
+    }
+
+    next();
+};
+
 exports.updateCollectionStatus = (req, res, next) => {
     const { status, notes } = req.body;
 

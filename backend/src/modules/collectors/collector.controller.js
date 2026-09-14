@@ -36,6 +36,36 @@ exports.login = async (req, res) => {
     }
 };
 
+exports.changePassword = async (req, res) => {
+    try {
+        if (!ensureCollector(req, res)) return;
+
+        await collectorService.changePassword(
+            req.user.id,
+            req.body.currentPassword,
+            req.body.newPassword
+        );
+
+        res.status(200).json({
+            message: "Password changed successfully",
+        });
+    } catch (err) {
+        if (err.message === "Collector not found") {
+            return res.status(404).json({
+                message: "Collector not found",
+            });
+        }
+
+        if (err.message === "Current password is incorrect") {
+            return res.status(400).json({
+                message: "Current password is incorrect",
+            });
+        }
+
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
 exports.getDashboard = async (req, res) => {
     try {
         if (!ensureCollector(req, res)) return;

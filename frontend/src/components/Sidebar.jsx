@@ -40,6 +40,7 @@ const businessLinks = [
 const collectorLinks = [
   { to: '/collector/dashboard', label: 'Dashboard', icon: '📊' },
   { to: '/collector/notifications', label: 'Notifications', icon: '🔔' },
+  { to: '/collector/change-password', label: 'Change Password', icon: '🔑' },
 ]
 
 const systemAdminLinks = [

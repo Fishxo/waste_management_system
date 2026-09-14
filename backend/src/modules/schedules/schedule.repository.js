@@ -145,7 +145,7 @@ exports.updateSchedule = async (scheduleId, data) => {
         end_time = $6,
         notes = $7,
         collector_id = $8,
-        status = CASE WHEN $8 IS NOT NULL THEN 'assigned' ELSE status END
+        status = CASE WHEN $8::integer IS NOT NULL THEN 'assigned' ELSE 'scheduled' END
         WHERE id = $9
          RETURNING *
     `;

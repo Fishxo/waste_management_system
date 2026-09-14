@@ -65,6 +65,27 @@ exports.getAllCollectors = async (kifleKetema) => {
     return await collectorRepository.getAllCollectors(kifleKetema);
 };
 
+exports.changePassword = async (id, currentPassword, newPassword) => {
+    const collector = await collectorRepository.findCollectorPasswordById(id);
+
+    if (!collector) {
+        throw new Error("Collector not found");
+    }
+
+    const isMatch = await bcrypt.compare(
+        currentPassword,
+        collector.password_hash
+    );
+
+    if (!isMatch) {
+        throw new Error("Current password is incorrect");
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await collectorRepository.updateCollectorPassword(id, hashedPassword);
+};
+
 exports.getDashboard = async (collectorId) => {
     const collector = await collectorRepository.findCollectorById(collectorId);
 
