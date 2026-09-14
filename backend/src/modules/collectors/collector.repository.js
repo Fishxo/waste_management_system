@@ -94,6 +94,7 @@ exports.getAssignedSchedules = async (collectorId) => {
             sefer,
             collection_date,
             collection_time,
+            end_time,
             notes,
             status,
             created_at

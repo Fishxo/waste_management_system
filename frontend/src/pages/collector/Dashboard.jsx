@@ -3,10 +3,20 @@ import api from '../../api/axios'
 import Loading from '../../components/Loading'
 import { useAuth } from '../../context/AuthContext'
 
+const STATUS_TRANSITIONS = {
+  assigned: ['pending', 'in_progress', 'completed', 'failed'],
+  pending: ['in_progress', 'completed', 'failed'],
+  in_progress: ['pending', 'completed', 'failed'],
+  completed: ['pending', 'in_progress', 'failed'],
+  failed: ['pending', 'in_progress', 'completed'],
+}
+
 const statusBadge = {
+  pending: 'bg-gray-100 text-gray-800',
   assigned: 'bg-blue-100 text-blue-800',
   in_progress: 'bg-orange-100 text-orange-800',
   completed: 'bg-green-100 text-green-800',
+  failed: 'bg-red-100 text-red-800',
   confirmed: 'bg-emerald-100 text-emerald-800',
   scheduled: 'bg-gray-100 text-gray-800',
 }
@@ -24,7 +34,10 @@ function formatDate(value) {
 
 function formatStatus(status) {
   if (!status) return '—'
-  return status.replace('_', ' ')
+  return status
+    .split('_')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
 }
 
 function formatTime(value) {
@@ -37,14 +50,25 @@ function formatTime(value) {
   return `${h}:${minutes || '00'} ${suffix}`
 }
 
-function nextStatus(current) {
-  if (current === 'assigned') return 'in_progress'
-  if (current === 'in_progress') return 'completed'
-  return null
+function formatTimeRange(start, end) {
+  if (!start) return '—'
+  return end ? `${formatTime(start)} — ${formatTime(end)}` : formatTime(start)
 }
 
 function TaskCard({ title, subtitle, status, children, onUpdate, updating }) {
-  const next = nextStatus(status)
+  const allowedStatuses = STATUS_TRANSITIONS[status] || []
+  const [selectedStatus, setSelectedStatus] = useState(allowedStatuses[0] || '')
+  const [reason, setReason] = useState('')
+
+  useEffect(() => {
+    setSelectedStatus((STATUS_TRANSITIONS[status] || [])[0] || '')
+    setReason('')
+  }, [status])
+
+  const canUpdate =
+    allowedStatuses.length > 0 &&
+    selectedStatus &&
+    (selectedStatus !== 'failed' || reason.trim())
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
@@ -64,20 +88,39 @@ function TaskCard({ title, subtitle, status, children, onUpdate, updating }) {
         </span>
       </div>
       {children}
-      {next && (
-        <button
-          type="button"
-          onClick={() => onUpdate(next)}
-          disabled={updating}
-          className="mt-4 w-full bg-teal-600 hover:bg-teal-700 text-white py-2 rounded-lg text-sm font-medium cursor-pointer disabled:opacity-50"
-        >
-          {updating
-            ? 'Updating...'
-            : `Mark as ${formatStatus(next)}`}
-        </button>
-      )}
-      {status === 'completed' && (
-        <p className="mt-3 text-sm text-green-700 font-medium">Completed</p>
+      {allowedStatuses.length > 0 && (
+        <div className="mt-4 space-y-2">
+          <select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+            disabled={updating}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-400 disabled:opacity-50"
+          >
+            {allowedStatuses.map((s) => (
+              <option key={s} value={s}>
+                {formatStatus(s)}
+              </option>
+            ))}
+          </select>
+          {selectedStatus === 'failed' && (
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="What happened? (required)"
+              disabled={updating}
+              rows={2}
+              className="w-full border border-red-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-red-300 disabled:opacity-50 resize-none"
+            />
+          )}
+          <button
+            type="button"
+            onClick={() => onUpdate(selectedStatus, selectedStatus === 'failed' ? reason.trim() : undefined)}
+            disabled={!canUpdate || updating}
+            className="w-full bg-teal-600 hover:bg-teal-700 text-white py-2 rounded-lg text-sm font-medium cursor-pointer disabled:opacity-50"
+          >
+            {updating ? 'Updating...' : 'Submit'}
+          </button>
+        </div>
       )}
     </div>
   )
@@ -110,10 +153,13 @@ export default function CollectorDashboard() {
     loadDashboard()
   }, [])
 
-  const handleScheduleUpdate = async (scheduleId, status) => {
+  const handleScheduleUpdate = async (scheduleId, status, notes) => {
     setUpdating(`schedule-${scheduleId}`)
     try {
-      await api.patch(`/collectors/schedules/${scheduleId}/status`, { status })
+      await api.patch(`/collectors/schedules/${scheduleId}/status`, {
+        status,
+        notes,
+      })
       loadDashboard()
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update schedule')
@@ -122,11 +168,12 @@ export default function CollectorDashboard() {
     }
   }
 
-  const handleRequestUpdate = async (requestId, status) => {
+  const handleRequestUpdate = async (requestId, status, notes) => {
     setUpdating(`request-${requestId}`)
     try {
       await api.patch(`/collectors/on-demand-requests/${requestId}/status`, {
         status,
+        notes,
       })
       loadDashboard()
     } catch (err) {
@@ -162,11 +209,14 @@ export default function CollectorDashboard() {
             {schedules.map((schedule) => (
               <TaskCard
                 key={schedule.id}
-                title={`${formatDate(schedule.collection_date)} — ${formatTime(schedule.collection_time)}`}
+                title={`${formatDate(schedule.collection_date)} — ${formatTimeRange(
+                  schedule.collection_time,
+                  schedule.end_time
+                )}`}
                 subtitle={`${schedule.kifle_ketema}, Kebele ${schedule.kebele}, ${schedule.sefer}`}
                 status={schedule.status}
-                onUpdate={(status) =>
-                  handleScheduleUpdate(schedule.id, status)
+                onUpdate={(status, notes) =>
+                  handleScheduleUpdate(schedule.id, status, notes)
                 }
                 updating={updating === `schedule-${schedule.id}`}
               >
@@ -195,8 +245,8 @@ export default function CollectorDashboard() {
                 title={request.business_name}
                 subtitle={`${request.owner_name} — ${request.address || 'No address'}`}
                 status={request.collection_status}
-                onUpdate={(status) =>
-                  handleRequestUpdate(request.id, status)
+                onUpdate={(status, notes) =>
+                  handleRequestUpdate(request.id, status, notes)
                 }
                 updating={updating === `request-${request.id}`}
               >
@@ -208,6 +258,12 @@ export default function CollectorDashboard() {
                   {request.description && <p>{request.description}</p>}
                   {request.phone_number && (
                     <p>Phone: {request.phone_number}</p>
+                  )}
+                  {request.collector_notes && (
+                    <p>
+                      <span className="font-medium">Reason:</span>{' '}
+                      {request.collector_notes}
+                    </p>
                   )}
                 </div>
               </TaskCard>

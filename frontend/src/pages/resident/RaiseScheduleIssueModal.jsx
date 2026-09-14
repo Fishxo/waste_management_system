@@ -44,6 +44,11 @@ function formatTime(value) {
   return `${h}:${minutes || '00'} ${suffix}`
 }
 
+function formatTimeRange(start, end) {
+  if (!start) return '—'
+  return end ? `${formatTime(start)} — ${formatTime(end)}` : formatTime(start)
+}
+
 function buildDescription(issueType, customIssue) {
   const option = ISSUE_OPTIONS.find((item) => item.value === issueType)
   if (issueType === 'other') {
@@ -144,7 +149,8 @@ export default function RaiseScheduleIssueModal({ schedule, onClose, onSuccess }
               {schedule.collection_date
                 ? new Date(schedule.collection_date).toLocaleDateString()
                 : '—'}{' '}
-              at {formatTime(schedule.collection_time)}
+              at {' '}
+              {formatTimeRange(schedule.collection_time, schedule.end_time)}
             </p>
             <p>
               <span className="text-gray-400">Location:</span>{' '}

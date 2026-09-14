@@ -20,6 +20,11 @@ function formatTime(value) {
   return `${h}:${minutes || '00'} ${suffix}`
 }
 
+function formatTimeRange(start, end) {
+  if (!start) return '—'
+  return end ? `${formatTime(start)} — ${formatTime(end)}` : formatTime(start)
+}
+
 function formatDate(value) {
   if (!value) return '—'
   const date = new Date(value)
@@ -183,7 +188,7 @@ export default function AdminScheduleIssues() {
                         : '—'}
                     </p>
                     <p className="text-xs text-gray-500">
-                      {formatTime(issue.collection_time)}
+                      {formatTimeRange(issue.collection_time, issue.end_time)}
                     </p>
                   </td>
                   <td className="px-4 py-3 max-w-xs">

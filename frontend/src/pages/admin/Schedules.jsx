@@ -9,7 +9,25 @@ const emptyForm = {
   sefer: '',
   collectionDate: '',
   collectionTime: '',
+  collectionEndTime: '',
+  collectorId: '',
   notes: '',
+}
+
+function todayInputDate() {
+  const date = new Date()
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+function formatTime(value) {
+  if (!value) return '—'
+  const [hours, minutes] = String(value).split(':')
+  if (!hours) return value
+  let h = Number(hours)
+  const suffix = h >= 12 ? 'PM' : 'AM'
+  h = h % 12 || 12
+  return `${h}:${minutes || '00'} ${suffix}`
 }
 
 function formatCollectionDate(value) {
@@ -38,6 +56,8 @@ function toForm(schedule) {
     sefer: schedule.sefer || '',
     collectionDate: toInputDate(schedule.collection_date),
     collectionTime: schedule.collection_time || '',
+    collectionEndTime: schedule.end_time || '',
+    collectorId: schedule.collector_id || '',
     notes: schedule.notes || '',
   }
 }
@@ -98,27 +118,26 @@ export default function AdminSchedules() {
     setError('')
   }
 
-  const handleAssignCollector = async (scheduleId, collectorId) => {
-    if (!collectorId) return
-    try {
-      await api.patch(`/muAdmin/schedules/${scheduleId}/assign-collector`, {
-        collectorId: Number(collectorId),
-      })
-      setMessage('Collector assigned to schedule')
-      fetchSchedules()
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to assign collector')
-    }
-  }
-
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setSubmitting(true)
     setError('')
+
+    if (form.collectionDate < todayInputDate()) {
+      setError('Collection date cannot be in the past')
+      return
+    }
+
+    if (form.collectionEndTime <= form.collectionTime) {
+      setError('End time must be after the start time')
+      return
+    }
+
+    setSubmitting(true)
     try {
       const payload = {
         ...form,
         kifleKetema: user?.kifleKetema || form.kifleKetema,
+        collectorId: form.collectorId ? Number(form.collectorId) : null,
       }
       if (editingId) {
         await api.patch(`/muAdmin/schedules/${editingId}`, payload)
@@ -213,6 +232,7 @@ export default function AdminSchedules() {
                 name="collectionDate"
                 type="date"
                 value={form.collectionDate}
+                min={todayInputDate()}
                 onChange={handleChange}
                 required
                 className={inputClass}
@@ -220,7 +240,7 @@ export default function AdminSchedules() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Collection Time
+                Start Time
               </label>
               <input
                 name="collectionTime"
@@ -230,6 +250,39 @@ export default function AdminSchedules() {
                 required
                 className={inputClass}
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                End Time
+              </label>
+              <input
+                name="collectionEndTime"
+                type="time"
+                value={form.collectionEndTime}
+                onChange={handleChange}
+                required
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Assign Collector
+              </label>
+              <select
+                name="collectorId"
+                value={form.collectorId}
+                onChange={handleChange}
+                className={inputClass}
+              >
+                <option value="">
+                  {editingId ? 'No collector' : 'Unassigned'}
+                </option>
+                {collectors.map((collector) => (
+                  <option key={collector.id} value={collector.id}>
+                    {collector.full_name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -310,7 +363,11 @@ export default function AdminSchedules() {
                       <td className="px-4 py-3">
                         {formatCollectionDate(schedule.collection_date)}
                       </td>
-                      <td className="px-4 py-3">{schedule.collection_time}</td>
+                      <td className="px-4 py-3">
+                        {schedule.end_time
+                          ? `${formatTime(schedule.collection_time)} — ${formatTime(schedule.end_time)}`
+                          : formatTime(schedule.collection_time)}
+                      </td>
                       <td className="px-4 py-3">
                         <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800">
                           {(schedule.status || 'scheduled').replace('_', ' ')}
@@ -322,48 +379,8 @@ export default function AdminSchedules() {
                       <td className="px-4 py-3 text-gray-500">
                         {schedule.created_by || '—'}
                       </td>
-                      <td className="px-4 py-3">
-                        {schedule.collector_name ? (
-                          <div>
-                            <span className="text-sm block">
-                              {schedule.collector_name}
-                            </span>
-                            {schedule.status !== 'completed' && (
-                              <select
-                                defaultValue=""
-                                onChange={(e) =>
-                                  handleAssignCollector(
-                                    schedule.id,
-                                    e.target.value
-                                  )
-                                }
-                                className="mt-1 border border-gray-300 rounded px-2 py-1 text-xs w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                              >
-                                <option value="">Reassign...</option>
-                                {collectors.map((c) => (
-                                  <option key={c.id} value={c.id}>
-                                    {c.full_name}
-                                  </option>
-                                ))}
-                              </select>
-                            )}
-                          </div>
-                        ) : (
-                          <select
-                            defaultValue=""
-                            onChange={(e) =>
-                              handleAssignCollector(schedule.id, e.target.value)
-                            }
-                            className="border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                          >
-                            <option value="">Assign...</option>
-                            {collectors.map((c) => (
-                              <option key={c.id} value={c.id}>
-                                {c.full_name}
-                              </option>
-                            ))}
-                          </select>
-                        )}
+                      <td className="px-4 py-3 text-gray-500">
+                        {schedule.collector_name || '—'}
                       </td>
                       <td className="px-4 py-3">
                         <button

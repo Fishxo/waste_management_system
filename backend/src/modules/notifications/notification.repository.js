@@ -69,6 +69,18 @@ exports.getNotificationsForUser = async (recipientRole, recipientId) => {
     return result.rows;
 };
 
+exports.getUnreadCount = async (recipientRole, recipientId) => {
+    const query = `
+        SELECT COUNT(*)::int AS count
+        FROM notifications
+        WHERE recipient_role = $1 AND recipient_id = $2 AND is_read = false
+    `;
+
+    const result = await pool.query(query, [recipientRole, recipientId]);
+
+    return result.rows[0].count;
+};
+
 exports.markAsRead = async (notificationId, recipientRole, recipientId) => {
     const query = `
         UPDATE notifications

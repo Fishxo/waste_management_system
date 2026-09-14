@@ -29,6 +29,22 @@ exports.getMyNotifications = async (req, res) => {
     }
 };
 
+exports.getUnreadCount = async (req, res) => {
+    try {
+        const { role, id } = getRecipient(req);
+
+        if (!["resident", "business_owner", "collector"].includes(role)) {
+            return res.status(403).json({ message: "Access denied" });
+        }
+
+        const count = await notificationService.getUnreadCount(role, id);
+
+        res.status(200).json({ count });
+    } catch (err) {
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
 exports.markAsRead = async (req, res) => {
     try {
         const { role, id } = getRecipient(req);

@@ -35,7 +35,10 @@ exports.notifyScheduleArea = async (schedule, action = "updated") => {
         action === "created"
             ? "New Collection Schedule"
             : "Collection Schedule Updated";
-    const message = `Waste collection for ${schedule.kifle_ketema}, Kebele ${schedule.kebele} (${schedule.sefer}) is scheduled on ${schedule.collection_date} at ${schedule.collection_time}.`;
+    const timeRange = schedule.end_time
+        ? `${schedule.collection_time} - ${schedule.end_time}`
+        : schedule.collection_time;
+    const message = `Waste collection for ${schedule.kifle_ketema}, Kebele ${schedule.kebele} (${schedule.sefer}) is scheduled on ${schedule.collection_date} from ${timeRange}.`;
 
     const residentIds = await notificationRepository.getResidentIdsByArea(
         schedule.kifle_ketema,
@@ -66,6 +69,10 @@ exports.getNotifications = async (recipientRole, recipientId) => {
         recipientRole,
         recipientId
     );
+};
+
+exports.getUnreadCount = async (recipientRole, recipientId) => {
+    return await notificationRepository.getUnreadCount(recipientRole, recipientId);
 };
 
 exports.markAsRead = async (notificationId, recipientRole, recipientId) => {

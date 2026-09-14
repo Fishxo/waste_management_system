@@ -23,6 +23,11 @@ function formatTime(value) {
   return `${h}:${minutes || '00'} ${suffix}`
 }
 
+function formatTimeRange(start, end) {
+  if (!start) return '—'
+  return end ? `${formatTime(start)} — ${formatTime(end)}` : formatTime(start)
+}
+
 export default function BusinessSchedules() {
   const [schedules, setSchedules] = useState([])
   const [loading, setLoading] = useState(true)
@@ -77,7 +82,10 @@ export default function BusinessSchedules() {
                   {formatDate(schedule.collection_date)}
                 </span>
                 <span className="text-lg font-bold text-gray-900">
-                  {formatTime(schedule.collection_time)}
+                  {formatTimeRange(
+                    schedule.collection_time,
+                    schedule.end_time
+                  )}
                 </span>
               </div>
               <div className="space-y-1 text-sm text-gray-600 flex-1">

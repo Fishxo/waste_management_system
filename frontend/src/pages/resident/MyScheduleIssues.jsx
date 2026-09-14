@@ -25,6 +25,11 @@ function formatTime(value) {
   return `${h}:${minutes || '00'} ${suffix}`
 }
 
+function formatTimeRange(start, end) {
+  if (!start) return '—'
+  return end ? `${formatTime(start)} — ${formatTime(end)}` : formatTime(start)
+}
+
 function formatDate(value) {
   if (!value) return '—'
   const date = new Date(value)
@@ -106,7 +111,8 @@ export default function MyScheduleIssues() {
                     {issue.collection_date
                       ? new Date(issue.collection_date).toLocaleDateString()
                       : '—'}{' '}
-                    at {formatTime(issue.collection_time)}
+                    at{' '}
+                    {formatTimeRange(issue.collection_time, issue.end_time)}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
                     {issue.kifle_ketema}, Kebele {issue.kebele || '—'},{' '}

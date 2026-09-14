@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useNotification } from '../context/NotificationContext'
 
 const residentLinks = [
   { to: '/resident/dashboard', label: 'Dashboard', icon: '📊' },
@@ -50,6 +51,7 @@ const systemAdminLinks = [
 
 export default function Sidebar() {
   const { user } = useAuth()
+  const { unreadCount } = useNotification()
   const isAdmin = user?.role === 'municipal_admin'
   const isSystemAdmin = user?.role === 'system_admin'
   const isBusiness = user?.role === 'business_owner'
@@ -91,7 +93,12 @@ export default function Sidebar() {
             }
           >
             <span>{link.icon}</span>
-            {link.label}
+            <span className="flex-1">{link.label}</span>
+            {link.label === 'Notifications' && unreadCount > 0 && (
+              <span className="min-w-[1.4rem] h-5 px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-semibold">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
           </NavLink>
         ))}
       </nav>

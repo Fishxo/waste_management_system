@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import api from '../../api/axios'
 import Loading from '../../components/Loading'
+import { useNotification } from '../../context/NotificationContext'
 
 const typeBadge = {
   schedule_update: 'bg-indigo-100 text-indigo-800',
@@ -36,6 +37,7 @@ export default function NotificationsPage({ title = 'Notifications' }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [marking, setMarking] = useState(null)
+  const { refreshUnread } = useNotification()
 
   const loadNotifications = useCallback(() => {
     setLoading(true)
@@ -48,8 +50,11 @@ export default function NotificationsPage({ title = 'Notifications' }) {
       .catch((err) =>
         setError(err.response?.data?.message || 'Failed to load notifications')
       )
-      .finally(() => setLoading(false))
-  }, [])
+      .finally(() => {
+        setLoading(false)
+        refreshUnread()
+      })
+  }, [refreshUnread])
 
   useEffect(() => {
     loadNotifications()
@@ -134,14 +139,7 @@ export default function NotificationsPage({ title = 'Notifications' }) {
                     <h3 className="font-semibold text-gray-900">
                       {notification.title}
                     </h3>
-                    <span
-                      className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                        typeBadge[notification.type] ||
-                        'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {formatType(notification.type)}
-                    </span>
+                    
                     {!notification.is_read && (
                       <span className="h-2 w-2 rounded-full bg-indigo-500" />
                     )}

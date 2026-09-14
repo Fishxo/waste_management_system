@@ -50,9 +50,15 @@ exports.updateCollectionStatus = (req, res, next) => {
         });
     }
 
-    if (!["in_progress", "completed"].includes(status)) {
+    if (!["pending", "in_progress", "completed", "failed"].includes(status)) {
         return res.status(400).json({
-            message: "Invalid status. Allowed: in_progress, completed",
+            message: "Invalid status. Allowed: pending, in_progress, completed, failed",
+        });
+    }
+
+    if (status === "failed" && (!notes || !String(notes).trim())) {
+        return res.status(400).json({
+            message: "A failure reason is required when marking as failed",
         });
     }
 

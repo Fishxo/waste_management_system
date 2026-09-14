@@ -9,6 +9,7 @@ exports.findScheduleById = async (scheduleId) => {
             sefer,
             collection_date,
             collection_time,
+            end_time,
             notes,
             created_at
         FROM schedules
@@ -93,7 +94,8 @@ exports.getAllIssues = async (status, kifleKetema) => {
             s.kebele,
             s.sefer,
             s.collection_date,
-            s.collection_time
+            s.collection_time,
+            s.end_time
         FROM schedule_issues si
         JOIN schedules s
             ON si.schedule_id = s.id
@@ -137,7 +139,8 @@ exports.getIssuesByResidentId = async (residentId) => {
             s.kebele,
             s.sefer,
             s.collection_date,
-            s.collection_time
+            s.collection_time,
+            s.end_time
         FROM schedule_issues si
         JOIN schedules s
             ON si.schedule_id = s.id

@@ -3,6 +3,12 @@ const notificationController = require("./notification.controller");
 const authMiddleware = require("../../middleware/auth.middleware");
 
 router.get(
+    "/unread-count",
+    authMiddleware.authenticate,
+    notificationController.getUnreadCount
+);
+
+router.get(
     "/",
     authMiddleware.authenticate,
     notificationController.getMyNotifications

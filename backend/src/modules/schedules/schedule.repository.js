@@ -1,6 +1,7 @@
 const pool = require("../../database/db");
 
 exports.createSchedule = async (adminId, data) => {
+    const hasCollector = Boolean(data.collectorId);
     const query = `
         INSERT INTO schedules
         (
@@ -9,10 +10,13 @@ exports.createSchedule = async (adminId, data) => {
             sefer,
             collection_date,
             collection_time,
+            end_time,
             notes,
-            created_by
+            created_by,
+            collector_id,
+            status
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
         RETURNING *
     `;
 
@@ -22,8 +26,11 @@ exports.createSchedule = async (adminId, data) => {
         data.sefer,
         data.collectionDate,
         data.collectionTime,
+        data.collectionEndTime,
         data.notes,
         adminId,
+        hasCollector ? data.collectorId : null,
+        hasCollector ? 'assigned' : 'scheduled',
     ];
 
     const result = await pool.query(query, values);
@@ -40,6 +47,7 @@ exports.getAllSchedules = async (kifleKetema) => {
             s.sefer,
             s.collection_date,
             s.collection_time,
+            s.end_time,
             s.notes,
             s.status,
             s.collector_id,
@@ -76,6 +84,7 @@ exports.getSchedulesByArea = async (kifleKetema) => {
             sefer,
             collection_date,
             collection_time,
+            end_time,
             notes,
             created_at
         FROM schedules
@@ -97,6 +106,7 @@ exports.getSchedulesByLocation = async (kifleKetema, kebele) => {
             sefer,
             collection_date,
             collection_time,
+            end_time,
             notes,
             created_at
         FROM schedules
@@ -109,6 +119,21 @@ exports.getSchedulesByLocation = async (kifleKetema, kebele) => {
     return result.rows;
 };
 
+exports.getScheduleById = async (scheduleId) => {
+    const query = `
+        SELECT
+            id,
+            collector_id,
+            status
+        FROM schedules
+        WHERE id = $1
+    `;
+
+    const result = await pool.query(query, [scheduleId]);
+
+    return result.rows[0];
+};
+
 exports.updateSchedule = async (scheduleId, data) => {
     const query = `
      UPDATE schedules
@@ -117,8 +142,11 @@ exports.updateSchedule = async (scheduleId, data) => {
         sefer = $3,
         collection_date = $4,
         collection_time = $5,
-        notes = $6
-        WHERE id = $7
+        end_time = $6,
+        notes = $7,
+        collector_id = $8,
+        status = CASE WHEN $8 IS NOT NULL THEN 'assigned' ELSE status END
+        WHERE id = $9
          RETURNING *
     `;
     const values = [
@@ -127,7 +155,9 @@ exports.updateSchedule = async (scheduleId, data) => {
         data.sefer,
         data.collectionDate,
         data.collectionTime,
+        data.collectionEndTime,
         data.notes,
+        data.collectorId || null,
         scheduleId,
     ];
     const result = await pool.query(query, values);

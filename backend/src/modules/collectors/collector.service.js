@@ -5,11 +5,14 @@ const collectorRepository = require("./collector.repository");
 const onDemandRequestRepository = require("../onDemandRequests/onDemandRequest.repository");
 const notificationService = require("../notifications/notification.service");
 
-const COLLECTOR_UPDATE_STATUSES = ["in_progress", "completed"];
+const COLLECTOR_UPDATE_STATUSES = ["pending", "in_progress", "completed", "failed"];
 
 const STATUS_TRANSITIONS = {
-    assigned: ["in_progress"],
-    in_progress: ["completed"],
+    assigned: ["pending", "in_progress", "completed", "failed"],
+    pending: ["in_progress", "completed", "failed"],
+    in_progress: ["pending", "completed", "failed"],
+    completed: ["pending", "in_progress", "failed"],
+    failed: ["pending", "in_progress", "completed"],
 };
 
 exports.createCollector = async (adminId, data) => {
