@@ -67,8 +67,49 @@ exports.createMunicipalAdmin = async (data) => {
     });
 };
 
+exports.updateMunicipalAdmin = async (id, data) => {
+    const passwordHash = data.password
+        ? await bcrypt.hash(data.password, 10)
+        : null;
+
+    const admin = await systemAdminRepository.updateMunicipalAdmin({
+        id,
+        username: data.username,
+        email: data.email,
+        kifleKetema: data.kifleKetema,
+        passwordHash,
+    });
+
+    if (!admin) {
+        throw new Error("Municipal admin not found");
+    }
+
+    return admin;
+};
+
 exports.getCollectors = async () => {
     return await systemAdminRepository.getAllCollectors();
+};
+
+exports.updateCollector = async (id, data) => {
+    const passwordHash = data.password
+        ? await bcrypt.hash(data.password, 10)
+        : null;
+
+    const collector = await systemAdminRepository.updateCollector({
+        id,
+        fullName: data.fullName,
+        phoneNumber: data.phoneNumber,
+        email: data.email,
+        kifleKetema: data.kifleKetema,
+        passwordHash,
+    });
+
+    if (!collector) {
+        throw new Error("Collector not found");
+    }
+
+    return collector;
 };
 
 exports.createCollector = async (data) => {

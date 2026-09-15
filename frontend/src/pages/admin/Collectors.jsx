@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import api from '../../api/axios'
 import Loading from '../../components/Loading'
+import { useAuth } from '../../context/AuthContext'
 
 export default function AdminCollectors() {
+  const { user } = useAuth()
   const [collectors, setCollectors] = useState([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -13,7 +15,7 @@ export default function AdminCollectors() {
     phoneNumber: '',
     email: '',
     password: '',
-    kifleKetema: '',
+    kifleKetema: user?.kifleKetema || '',
   })
 
   const fetchCollectors = () => {
@@ -54,7 +56,7 @@ export default function AdminCollectors() {
         phoneNumber: '',
         email: '',
         password: '',
-        kifleKetema: '',
+        kifleKetema: user?.kifleKetema || '',
       })
       fetchCollectors()
     } catch (err) {
@@ -120,8 +122,14 @@ export default function AdminCollectors() {
             value={form.kifleKetema}
             onChange={handleChange}
             required
-            className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            readOnly={!!user?.kifleKetema}
+            className={`border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 ${user?.kifleKetema ? 'bg-gray-50' : ''}`}
           />
+          {user?.kifleKetema && (
+            <p className="text-xs text-gray-500 -mt-2">
+              Collector will be created for {user.kifleKetema} sub-city.
+            </p>
+          )}
           <input
             name="password"
             type="password"

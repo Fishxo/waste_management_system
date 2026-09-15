@@ -114,7 +114,7 @@ exports.markAllAsRead = async (recipientRole, recipientId) => {
 exports.getResidentIdsByArea = async (kifleKetema, kebele) => {
     const query = `
         SELECT id FROM residents
-        WHERE kifle_ketema = $1 AND kebele = $2 AND is_active = true
+        WHERE LOWER(kifle_ketema) = LOWER($1) AND kebele = $2 AND is_active = true
     `;
 
     const result = await pool.query(query, [kifleKetema, kebele]);
@@ -125,7 +125,7 @@ exports.getResidentIdsByArea = async (kifleKetema, kebele) => {
 exports.getBusinessOwnerIdsByArea = async (kifleKetema, kebele) => {
     const query = `
         SELECT business_id AS id FROM business_owners
-        WHERE kifle_ketema = $1 AND kebele = $2
+        WHERE LOWER(kifle_ketema) = LOWER($1) AND kebele = $2
     `;
 
     const result = await pool.query(query, [kifleKetema, kebele]);
@@ -138,7 +138,7 @@ exports.getAllRecipientIds = async (recipientRole, kifleKetema = null) => {
         let query = `SELECT id FROM residents WHERE is_active = true`;
         const values = [];
         if (kifleKetema) {
-            query += ` AND kifle_ketema = $1`;
+            query += ` AND LOWER(kifle_ketema) = LOWER($1)`;
             values.push(kifleKetema);
         }
         const result = await pool.query(query, values);
@@ -149,7 +149,7 @@ exports.getAllRecipientIds = async (recipientRole, kifleKetema = null) => {
         let query = `SELECT business_id AS id FROM business_owners`;
         const values = [];
         if (kifleKetema) {
-            query += ` WHERE kifle_ketema = $1`;
+            query += ` WHERE LOWER(kifle_ketema) = LOWER($1)`;
             values.push(kifleKetema);
         }
         const result = await pool.query(query, values);
@@ -160,7 +160,7 @@ exports.getAllRecipientIds = async (recipientRole, kifleKetema = null) => {
         let query = `SELECT id FROM collectors WHERE is_active = true`;
         const values = [];
         if (kifleKetema) {
-            query += ` AND kifle_ketema = $1`;
+            query += ` AND LOWER(kifle_ketema) = LOWER($1)`;
             values.push(kifleKetema);
         }
         const result = await pool.query(query, values);

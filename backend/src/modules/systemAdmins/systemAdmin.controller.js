@@ -70,6 +70,32 @@ exports.createMunicipalAdmin = async (req, res) => {
     }
 };
 
+exports.updateMunicipalAdmin = async (req, res) => {
+    try {
+        const admin = await systemAdminService.updateMunicipalAdmin(
+            req.params.id,
+            req.body
+        );
+
+        res.status(200).json({
+            message: "Municipal admin updated successfully",
+            data: admin,
+        });
+    } catch (err) {
+        if (err.code === "23505") {
+            return res.status(409).json({
+                message: "Username or email already exists",
+            });
+        }
+
+        if (err.message === "Municipal admin not found") {
+            return res.status(404).json({ message: err.message });
+        }
+
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
 exports.getCollectors = async (req, res) => {
     try {
         const collectors = await systemAdminService.getCollectors();
@@ -99,6 +125,35 @@ exports.createCollector = async (req, res) => {
             return res.status(409).json({
                 message: `${field} already exists`,
             });
+        }
+
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+exports.updateCollector = async (req, res) => {
+    try {
+        const collector = await systemAdminService.updateCollector(
+            req.params.id,
+            req.body
+        );
+
+        res.status(200).json({
+            message: "Collector updated successfully",
+            data: collector,
+        });
+    } catch (err) {
+        if (err.code === "23505") {
+            const field = err.detail?.includes("phone_number")
+                ? "Phone number"
+                : "Email";
+            return res.status(409).json({
+                message: `${field} already exists`,
+            });
+        }
+
+        if (err.message === "Collector not found") {
+            return res.status(404).json({ message: err.message });
         }
 
         res.status(500).json({ message: "Server error" });

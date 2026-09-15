@@ -64,7 +64,7 @@ exports.getAllSchedules = async (kifleKetema) => {
     const values = [];
 
     if (kifleKetema) {
-        query += ` WHERE s.kifle_ketema = $1`;
+        query += ` WHERE LOWER(s.kifle_ketema) = LOWER($1)`;
         values.push(kifleKetema);
     }
 
@@ -88,7 +88,7 @@ exports.getSchedulesByArea = async (kifleKetema) => {
             notes,
             created_at
         FROM schedules
-        WHERE kifle_ketema = $1
+        WHERE LOWER(kifle_ketema) = LOWER($1)
         ORDER BY collection_date ASC, collection_time ASC
     `;
 
@@ -110,7 +110,7 @@ exports.getSchedulesByLocation = async (kifleKetema, kebele) => {
             notes,
             created_at
         FROM schedules
-        WHERE kifle_ketema = $1 AND kebele = $2
+        WHERE LOWER(kifle_ketema) = LOWER($1) AND kebele = $2
         ORDER BY collection_date ASC, collection_time ASC
     `;
 

@@ -41,6 +41,10 @@ exports.login = async (email, password) => {
     };
 };
 
+exports.getLocationOptions = async (kifleKetema) => {
+    return await adminRepository.getLocationOptions(kifleKetema);
+};
+
 exports.updateReportStatus = async (reportId, status, adminId) => {
     const report = await reportRepository.updateReportStatus(
         reportId,

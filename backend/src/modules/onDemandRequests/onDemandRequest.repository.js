@@ -123,7 +123,7 @@ exports.getAllRequests = async (status, kifleKetema) => {
     const conditions = [];
 
     if (kifleKetema) {
-        conditions.push(`b.kifle_ketema = $${values.length + 1}`);
+        conditions.push(`LOWER(b.kifle_ketema) = LOWER($${values.length + 1})`);
         values.push(kifleKetema);
     }
 

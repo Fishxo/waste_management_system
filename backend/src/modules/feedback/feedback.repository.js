@@ -69,8 +69,8 @@ exports.getAllFeedback = async (kifleKetema) => {
     if (kifleKetema) {
         query += `
         WHERE (
-            (f.submitter_role = 'resident' AND r.kifle_ketema = $1)
-            OR (f.submitter_role = 'business_owner' AND b.kifle_ketema = $1)
+            (f.submitter_role = 'resident' AND LOWER(r.kifle_ketema) = LOWER($1))
+            OR (f.submitter_role = 'business_owner' AND LOWER(b.kifle_ketema) = LOWER($1))
         )`;
         values.push(kifleKetema);
     }

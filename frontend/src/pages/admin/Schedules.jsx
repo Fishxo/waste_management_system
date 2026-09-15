@@ -66,6 +66,11 @@ export default function AdminSchedules() {
   const { user } = useAuth()
   const [schedules, setSchedules] = useState([])
   const [collectors, setCollectors] = useState([])
+  const [locationOptions, setLocationOptions] = useState({
+    kebeles: [],
+    sefers: [],
+  })
+  const [locationsLoading, setLocationsLoading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [editingId, setEditingId] = useState(null)
@@ -97,14 +102,72 @@ export default function AdminSchedules() {
       .catch(() => setCollectors([]))
   }, [])
 
+  const activeKifleKetema = user?.kifleKetema || form.kifleKetema
+
+  useEffect(() => {
+    if (!activeKifleKetema) {
+      setLocationOptions({ kebeles: [], sefers: [] })
+      return
+    }
+    let cancelled = false
+    setLocationsLoading(true)
+    api
+      .get('/muAdmin/locations', { params: { kifleKetema: activeKifleKetema } })
+      .then(({ data }) => {
+        if (!cancelled) {
+          setLocationOptions(
+            (Array.isArray(data) ? data : data?.data) || {
+              kebeles: [],
+              sefers: [],
+            }
+          )
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setLocationOptions({ kebeles: [], sefers: [] })
+      })
+      .finally(() => {
+        if (!cancelled) setLocationsLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [activeKifleKetema])
+
   useEffect(() => {
     if (!message) return
     const timer = setTimeout(() => setMessage(''), 4000)
     return () => clearTimeout(timer)
   }, [message])
 
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value })
+  const kebeleOptions = (() => {
+    const base = locationOptions.kebeles || []
+    return form.kebele && !base.includes(form.kebele)
+      ? [...base, form.kebele]
+      : base
+  })()
+
+  const seferOptions = (() => {
+    const base = (locationOptions.sefers || [])
+      .filter((s) => s.kebele === form.kebele)
+      .map((s) => s.sefer)
+    return form.sefer && !base.includes(form.sefer)
+      ? [...base, form.sefer]
+      : base
+  })()
+
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+      ...(name === 'kebele'
+        ? { sefer: '' }
+        : name === 'kifleKetema'
+          ? { kebele: '', sefer: '' }
+          : {}),
+    }))
+  }
 
   const startEdit = (schedule) => {
     setEditingId(schedule.id)
@@ -202,27 +265,47 @@ export default function AdminSchedules() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Kebele
               </label>
-              <input
+              <select
                 name="kebele"
                 value={form.kebele}
                 onChange={handleChange}
-                placeholder="e.g. 05"
                 required
+                disabled={locationsLoading}
                 className={inputClass}
-              />
+              >
+                <option value="">
+                  {locationsLoading ? 'Loading kebeles...' : 'Select Kebele'}
+                </option>
+                {kebeleOptions.map((kebele) => (
+                  <option key={kebele} value={kebele}>
+                    Kebele {kebele}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Sefer (Area/Landmark)
               </label>
-              <input
+              <select
                 name="sefer"
                 value={form.sefer}
                 onChange={handleChange}
-                placeholder="e.g. Bole Medhanealem"
                 required
+                disabled={locationsLoading || !form.kebele}
                 className={inputClass}
-              />
+              >
+                <option value="">
+                  {locationsLoading || !form.kebele
+                    ? 'Select Kebele first'
+                    : 'Select Sefer'}
+                </option>
+                {seferOptions.map((sefer) => (
+                  <option key={sefer} value={sefer}>
+                    Sefer {sefer}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

@@ -96,7 +96,7 @@ exports.getAllCollectors = async (kifleKetema) => {
     const values = [];
 
     if (kifleKetema) {
-        query += ` WHERE kifle_ketema = $1`;
+        query += ` WHERE LOWER(kifle_ketema) = LOWER($1)`;
         values.push(kifleKetema);
     }
 

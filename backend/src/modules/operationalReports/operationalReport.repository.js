@@ -7,7 +7,7 @@ function scopeClause(alias, kifleKetema, startIndex = 1) {
         return { clause: "", values: [] };
     }
     return {
-        clause: ` AND ${alias}.kifle_ketema = $${startIndex}`,
+        clause: ` AND LOWER(${alias}.kifle_ketema) = LOWER($${startIndex})`,
         values: [kifleKetema],
     };
 }
@@ -84,7 +84,7 @@ exports.getReports = async ({ reportType, dateFrom, dateTo, kifleKetema }) => {
 
     if (kifleKetema) {
         values.push(kifleKetema);
-        query += ` AND (kifle_ketema = $${values.length} OR kifle_ketema IS NULL)`;
+        query += ` AND (LOWER(kifle_ketema) = LOWER($${values.length}) OR kifle_ketema IS NULL)`;
     }
 
     if (reportType) {
@@ -129,7 +129,7 @@ exports.getReportById = async (id, kifleKetema) => {
 
     if (kifleKetema) {
         values.push(kifleKetema);
-        query += ` AND (kifle_ketema = $2 OR kifle_ketema IS NULL)`;
+        query += ` AND (LOWER(kifle_ketema) = LOWER($2) OR kifle_ketema IS NULL)`;
     }
 
     const result = await pool.query(query, values);
@@ -240,7 +240,7 @@ exports.generateCollectionsReport = async (dateFrom, dateTo, kifleKetema) => {
 
     if (kifleKetema) {
         onDemandValues.push(kifleKetema);
-        onDemandWhere += ` AND b.kifle_ketema = $${onDemandValues.length}`;
+        onDemandWhere += ` AND LOWER(b.kifle_ketema) = LOWER($${onDemandValues.length})`;
     }
 
     const onDemandDate = dateClause(
@@ -311,7 +311,7 @@ exports.generateOnDemandReport = async (dateFrom, dateTo, kifleKetema) => {
 
     if (kifleKetema) {
         values.push(kifleKetema);
-        where += ` AND b.kifle_ketema = $${values.length}`;
+        where += ` AND LOWER(b.kifle_ketema) = LOWER($${values.length})`;
     }
 
     const date = dateClause("r.created_at::date", dateFrom, dateTo, values.length + 1);
@@ -378,7 +378,7 @@ exports.generatePerformanceReport = async (dateFrom, dateTo, kifleKetema) => {
 
     if (kifleKetema) {
         values.push(kifleKetema);
-        where += ` AND c.kifle_ketema = $${values.length}`;
+        where += ` AND LOWER(c.kifle_ketema) = LOWER($${values.length})`;
     }
 
     let scheduleJoin = "LEFT JOIN schedules s ON s.collector_id = c.id";
@@ -449,8 +449,8 @@ exports.generatePerformanceReport = async (dateFrom, dateTo, kifleKetema) => {
         feedbackValues.push(kifleKetema);
         feedbackWhere += `
             AND (
-                (f.submitter_role = 'resident' AND res.kifle_ketema = $1)
-                OR (f.submitter_role = 'business_owner' AND b.kifle_ketema = $1)
+                (f.submitter_role = 'resident' AND LOWER(res.kifle_ketema) = LOWER($1))
+                OR (f.submitter_role = 'business_owner' AND LOWER(b.kifle_ketema) = LOWER($1))
             )`;
     }
 

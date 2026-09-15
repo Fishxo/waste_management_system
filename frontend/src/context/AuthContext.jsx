@@ -19,14 +19,26 @@ export function AuthProvider({ children }) {
 
   const login = (userData, token) => {
     if (userData.role === 'system_admin') {
+      localStorage.removeItem('adminUser')
+      localStorage.removeItem('adminToken')
+      localStorage.removeItem('user')
+      localStorage.removeItem('token')
       localStorage.setItem('systemAdminUser', JSON.stringify(userData))
       localStorage.setItem('systemAdminToken', token)
     } else if (userData.role === 'municipal_admin') {
+      localStorage.removeItem('systemAdminUser')
+      localStorage.removeItem('systemAdminToken')
+      localStorage.removeItem('user')
+      localStorage.removeItem('token')
       localStorage.setItem('adminUser', JSON.stringify(userData))
       localStorage.setItem('adminToken', token)
       localStorage.setItem('user', JSON.stringify(userData))
       localStorage.setItem('token', token)
     } else {
+      localStorage.removeItem('systemAdminUser')
+      localStorage.removeItem('systemAdminToken')
+      localStorage.removeItem('adminUser')
+      localStorage.removeItem('adminToken')
       localStorage.setItem('user', JSON.stringify(userData))
       localStorage.setItem('token', token)
     }

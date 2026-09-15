@@ -108,7 +108,7 @@ exports.getAllIssues = async (status, kifleKetema) => {
     const conditions = [];
 
     if (kifleKetema) {
-        conditions.push(`s.kifle_ketema = $${values.length + 1}`);
+        conditions.push(`LOWER(s.kifle_ketema) = LOWER($${values.length + 1})`);
         values.push(kifleKetema);
     }
 

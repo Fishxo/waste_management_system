@@ -27,6 +27,13 @@ router.post(
     systemAdminController.createMunicipalAdmin
 );
 
+router.put(
+    "/municipal-admins/:id",
+    authenticateSystemAdmin,
+    systemAdminValidation.updateMunicipalAdmin,
+    systemAdminController.updateMunicipalAdmin
+);
+
 router.get(
     "/collectors",
     authenticateSystemAdmin,
@@ -38,6 +45,13 @@ router.post(
     authenticateSystemAdmin,
     systemAdminValidation.createCollector,
     systemAdminController.createCollector
+);
+
+router.put(
+    "/collectors/:id",
+    authenticateSystemAdmin,
+    systemAdminValidation.updateCollector,
+    systemAdminController.updateCollector
 );
 
 router.patch(

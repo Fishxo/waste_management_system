@@ -33,6 +33,13 @@ router.get(
     adminController.getDashboardStatistics
 );
 
+//get location options for schedules (kebele/sefer per sub-city)
+router.get(
+    "/locations",
+    authenticateMuAdmin,
+    adminController.getLocationOptions
+);
+
 //getting the whole reports 
 router.get(
     "/reports",

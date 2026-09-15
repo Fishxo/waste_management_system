@@ -1,5 +1,8 @@
 const pool = require("../../database/db");
 const reportRepository = require("../reports/report.repository");
+const {
+    getLocationOptionsFor,
+} = require("../../constants/locations");
 
 exports.findAdminByEmail = async (email) => {
     const query = `
@@ -17,6 +20,88 @@ exports.findAdminByEmail = async (email) => {
     const result = await pool.query(query, [email]);
 
     return result.rows[0];
+};
+
+exports.getLocationOptions = async (kifleKetema) => {
+    if (!kifleKetema) {
+        return { kebeles: [], sefers: [] };
+    }
+
+    const canonical = getLocationOptionsFor(kifleKetema);
+
+    if (canonical) {
+        return canonical;
+    }
+
+    const kebelesResult = await pool.query(
+        `
+        SELECT DISTINCT norm_kebele AS kebele
+        FROM (
+            SELECT
+                CASE
+                    WHEN trim(kebele) ~ '^[0-9]+$'
+                        THEN lpad(trim(kebele), 2, '0')
+                    ELSE trim(kebele)
+                END AS norm_kebele
+            FROM (
+                SELECT kebele
+                FROM residents
+                WHERE LOWER(trim(kifle_ketema)) = LOWER(trim($1))
+                UNION ALL
+                SELECT kebele
+                FROM business_owners
+                WHERE LOWER(trim(kifle_ketema)) = LOWER(trim($1))
+                UNION ALL
+                SELECT kebele
+                FROM schedules
+                WHERE LOWER(trim(kifle_ketema)) = LOWER(trim($1))
+            ) loc
+        ) t
+        WHERE norm_kebele IS NOT NULL AND trim(norm_kebele) <> ''
+        ORDER BY kebele
+        `,
+        [kifleKetema]
+    );
+
+    const sefersResult = await pool.query(
+        `
+        SELECT DISTINCT norm_kebele AS kebele, norm_sefer AS sefer
+        FROM (
+            SELECT
+                CASE
+                    WHEN trim(kebele) ~ '^[0-9]+$'
+                        THEN lpad(trim(kebele), 2, '0')
+                    ELSE trim(kebele)
+                END AS norm_kebele,
+                CASE
+                    WHEN trim(sefer) ~ '^[0-9]+$'
+                        THEN lpad(trim(sefer), 2, '0')
+                    ELSE trim(sefer)
+                END AS norm_sefer
+            FROM (
+                SELECT kebele, sefer
+                FROM residents
+                WHERE LOWER(trim(kifle_ketema)) = LOWER(trim($1))
+                UNION ALL
+                SELECT kebele, sefer
+                FROM schedules
+                WHERE LOWER(trim(kifle_ketema)) = LOWER(trim($1))
+            ) loc
+        ) t
+        WHERE norm_kebele IS NOT NULL AND trim(norm_kebele) <> ''
+          AND norm_sefer IS NOT NULL AND trim(norm_sefer) <> ''
+        ORDER BY kebele, sefer
+        `,
+        [kifleKetema]
+    );
+
+    return {
+        kebeles: kebelesResult.rows.map((r) => r.kebele),
+        sefers: sefersResult.rows.map((r) => ({
+            kebele: r.kebele,
+            sefer: r.sefer,
+        })),
+    };
 };
 
 exports.updateReportStatus = async (reportId, status) => {
@@ -54,7 +139,7 @@ exports.getAllReports = async (status, kifleKetema) => {
     const conditions = [];
 
     if (kifleKetema) {
-        conditions.push(`res.kifle_ketema = $${values.length + 1}`);
+        conditions.push(`LOWER(res.kifle_ketema) = LOWER($${values.length + 1})`);
         values.push(kifleKetema);
     }
 
@@ -80,11 +165,11 @@ exports.getDashboardStatistics = async (kifleKetema) => {
     const query = kifleKetema
         ? `
         SELECT
-            (SELECT COUNT(*) FROM residents WHERE kifle_ketema = $1) AS total_residents,
-            (SELECT COUNT(*) FROM reports r JOIN residents res ON r.resident_id = res.id WHERE res.kifle_ketema = $1) AS total_reports,
-            (SELECT COUNT(*) FROM reports r JOIN residents res ON r.resident_id = res.id WHERE res.kifle_ketema = $1 AND r.status = 'pending') AS pending_reports,
-            (SELECT COUNT(*) FROM reports r JOIN residents res ON r.resident_id = res.id WHERE res.kifle_ketema = $1 AND r.status = 'in_progress') AS in_progress_reports,
-            (SELECT COUNT(*) FROM reports r JOIN residents res ON r.resident_id = res.id WHERE res.kifle_ketema = $1 AND r.status = 'resolved') AS resolved_reports
+            (SELECT COUNT(*) FROM residents WHERE LOWER(kifle_ketema) = LOWER($1)) AS total_residents,
+            (SELECT COUNT(*) FROM reports r JOIN residents res ON r.resident_id = res.id WHERE LOWER(res.kifle_ketema) = LOWER($1)) AS total_reports,
+            (SELECT COUNT(*) FROM reports r JOIN residents res ON r.resident_id = res.id WHERE LOWER(res.kifle_ketema) = LOWER($1) AND r.status = 'pending') AS pending_reports,
+            (SELECT COUNT(*) FROM reports r JOIN residents res ON r.resident_id = res.id WHERE LOWER(res.kifle_ketema) = LOWER($1) AND r.status = 'in_progress') AS in_progress_reports,
+            (SELECT COUNT(*) FROM reports r JOIN residents res ON r.resident_id = res.id WHERE LOWER(res.kifle_ketema) = LOWER($1) AND r.status = 'resolved') AS resolved_reports
         `
         : `
         SELECT
@@ -120,7 +205,7 @@ exports.getAllResidents = async (kifleKetema) => {
     const values = [];
 
     if (kifleKetema) {
-        query += ` WHERE kifle_ketema = $1`;
+        query += ` WHERE LOWER(kifle_ketema) = LOWER($1)`;
         values.push(kifleKetema);
     }
 
@@ -152,7 +237,7 @@ exports.getResidentById = async (id, kifleKetema) => {
     const values = [id];
 
     if (kifleKetema) {
-        query += ` AND kifle_ketema = $2`;
+        query += ` AND LOWER(kifle_ketema) = LOWER($2)`;
         values.push(kifleKetema);
     }
 
@@ -169,7 +254,7 @@ exports.deleteResidentById = async (id, kifleKetema) => {
     const values = [id];
 
     if (kifleKetema) {
-        query += ` AND kifle_ketema = $2`;
+        query += ` AND LOWER(kifle_ketema) = LOWER($2)`;
         values.push(kifleKetema);
     }
 
@@ -188,7 +273,7 @@ exports.updateResidentActive = async (id, isActive, kifleKetema) => {
     const values = [id, isActive];
 
     if (kifleKetema) {
-        query += ` AND kifle_ketema = $3`;
+        query += ` AND LOWER(kifle_ketema) = LOWER($3)`;
         values.push(kifleKetema);
     }
 
@@ -228,7 +313,7 @@ exports.getAllBusinessOwners = async (kifleKetema) => {
     const values = [];
 
     if (kifleKetema) {
-        query += ` WHERE kifle_ketema = $1`;
+        query += ` WHERE LOWER(kifle_ketema) = LOWER($1)`;
         values.push(kifleKetema);
     }
 
@@ -261,7 +346,7 @@ exports.getBusinessOwnerById = async (id, kifleKetema) => {
     const values = [id];
 
     if (kifleKetema) {
-        query += ` AND kifle_ketema = $2`;
+        query += ` AND LOWER(kifle_ketema) = LOWER($2)`;
         values.push(kifleKetema);
     }
 
@@ -278,7 +363,7 @@ exports.deleteBusinessOwnerById = async (id, kifleKetema) => {
     const values = [id];
 
     if (kifleKetema) {
-        query += ` AND kifle_ketema = $2`;
+        query += ` AND LOWER(kifle_ketema) = LOWER($2)`;
         values.push(kifleKetema);
     }
 
@@ -297,7 +382,7 @@ exports.updateBusinessOwnerActive = async (id, isActive, kifleKetema) => {
     const values = [id, isActive];
 
     if (kifleKetema) {
-        query += ` AND kifle_ketema = $3`;
+        query += ` AND LOWER(kifle_ketema) = LOWER($3)`;
         values.push(kifleKetema);
     }
 

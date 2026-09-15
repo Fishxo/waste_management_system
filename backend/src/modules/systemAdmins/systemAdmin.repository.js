@@ -56,6 +56,40 @@ exports.createMunicipalAdmin = async ({
     return result.rows[0];
 };
 
+exports.updateMunicipalAdmin = async ({
+    id,
+    username,
+    email,
+    kifleKetema,
+    passwordHash,
+}) => {
+    if (passwordHash) {
+        const result = await pool.query(
+            `
+            UPDATE municipal_admins
+            SET username = $2, email = $3, kifle_ketema = $4, password = $5
+            WHERE id = $1
+            RETURNING id, username, email, kifle_ketema, created_at
+            `,
+            [id, username, email, kifleKetema || null, passwordHash]
+        );
+
+        return result.rows[0] || null;
+    }
+
+    const result = await pool.query(
+        `
+        UPDATE municipal_admins
+        SET username = $2, email = $3, kifle_ketema = $4
+        WHERE id = $1
+        RETURNING id, username, email, kifle_ketema, created_at
+        `,
+        [id, username, email, kifleKetema || null]
+    );
+
+    return result.rows[0] || null;
+};
+
 exports.getAllCollectors = async () => {
     const result = await pool.query(`
         SELECT
@@ -93,6 +127,42 @@ exports.createCollector = async ({
     );
 
     return result.rows[0];
+};
+
+exports.updateCollector = async ({
+    id,
+    fullName,
+    phoneNumber,
+    email,
+    kifleKetema,
+    passwordHash,
+}) => {
+    if (passwordHash) {
+        const result = await pool.query(
+            `
+            UPDATE collectors
+            SET full_name = $2, phone_number = $3, email = $4,
+                kifle_ketema = $5, password_hash = $6
+            WHERE id = $1
+            RETURNING id, full_name, phone_number, email, kifle_ketema, is_active, created_at
+            `,
+            [id, fullName, phoneNumber, email, kifleKetema, passwordHash]
+        );
+
+        return result.rows[0] || null;
+    }
+
+    const result = await pool.query(
+        `
+        UPDATE collectors
+        SET full_name = $2, phone_number = $3, email = $4, kifle_ketema = $5
+        WHERE id = $1
+        RETURNING id, full_name, phone_number, email, kifle_ketema, is_active, created_at
+        `,
+        [id, fullName, phoneNumber, email, kifleKetema]
+    );
+
+    return result.rows[0] || null;
 };
 
 exports.updateCollectorActive = async (id, isActive) => {

@@ -31,6 +31,26 @@ exports.login = async (req, res) => {
 };
 
 //making an update report
+exports.getLocationOptions = async (req, res) => {
+    try {
+        const kifleKetema =
+            getAdminKifleKetema(req) || req.query.kifleKetema;
+
+        const options = await adminService.getLocationOptions(kifleKetema);
+
+        res.status(200).json({
+            message: "Location options retrieved successfully",
+            data: options,
+        });
+    } catch (err) {
+        console.log("GET LOCATION OPTIONS ERROR:", err);
+
+        res.status(500).json({
+            message: "Server error",
+        });
+    }
+};
+
 exports.updateReportStatus = async (req, res) => {
     try {
         const { id } = req.params;
