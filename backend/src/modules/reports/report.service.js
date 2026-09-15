@@ -7,6 +7,18 @@ function isLegacyScheduleIssueReport(report) {
     );
 }
 
+const MAX_DAILY_REPORTS = 3;
+
+exports.getDailyReportCount = async (residentId) => {
+    const used = await reportRepository.countReportsToday(residentId);
+
+    return {
+        used,
+        max: MAX_DAILY_REPORTS,
+        remaining: Math.max(0, MAX_DAILY_REPORTS - used),
+    };
+};
+
 exports.createReport = async (residentId, data) => {
     const resident = await residentRepository.findResidentActiveStatus(residentId);
 
@@ -17,8 +29,13 @@ exports.createReport = async (residentId, data) => {
     if (resident.is_active === false) {
         throw new Error("Your account has been deactivated");
     }
-    console.log("resident from db", resident)
-    
+
+    const todayCount = await reportRepository.countReportsToday(residentId);
+
+    if (todayCount >= MAX_DAILY_REPORTS) {
+        throw new Error("You have reached the maximum of 3 reports per day.");
+    }
+
     const report = await reportRepository.createReport(
         residentId,
         data

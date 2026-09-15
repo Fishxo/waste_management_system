@@ -115,6 +115,11 @@ export default function AdminFeedback() {
                 >
                   <td className="px-4 py-3">
                     <p className="font-medium">{item.submitter_name || '—'}</p>
+                    {item.submitter_code && (
+                      <p className="text-xs text-indigo-600 font-medium">
+                        {item.submitter_code}
+                      </p>
+                    )}
                     <p className="text-xs text-gray-500">
                       {item.submitter_email || '—'}
                     </p>

@@ -8,6 +8,7 @@ export function normalizeBusinessProfile(raw = {}) {
 
   return {
     businessId: get('business_id', 'businessId', 'id'),
+    businessCode: get('business_code', 'businessCode'),
     businessName: get('business_name', 'businessName'),
     ownerName: get('owner_name', 'ownerName'),
     email: get('email'),

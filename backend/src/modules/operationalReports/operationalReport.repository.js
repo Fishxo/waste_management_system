@@ -337,6 +337,7 @@ exports.generateOnDemandReport = async (dateFrom, dateTo, kifleKetema) => {
         SELECT
             r.id,
             b.business_name,
+            b.business_code,
             b.kifle_ketema,
             b.kebele,
             r.status,

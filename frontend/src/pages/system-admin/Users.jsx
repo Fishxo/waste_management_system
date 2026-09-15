@@ -42,7 +42,7 @@ export default function SystemAdminUsers() {
     const q = search.trim().toLowerCase()
     if (!q) return residents
     return residents.filter((r) =>
-      [r.first_name, r.last_name, r.email, r.phone_number, r.kifle_ketema]
+      [r.resident_code, r.first_name, r.last_name, r.email, r.phone_number, r.kifle_ketema]
         .filter(Boolean)
         .some((v) => String(v).toLowerCase().includes(q))
     )
@@ -52,7 +52,7 @@ export default function SystemAdminUsers() {
     const q = search.trim().toLowerCase()
     if (!q) return owners
     return owners.filter((o) =>
-      [o.business_name, o.owner_name, o.email, o.phone_number, o.kifle_ketema]
+      [o.business_name, o.business_code, o.owner_name, o.email, o.phone_number, o.kifle_ketema]
         .filter(Boolean)
         .some((v) => String(v).toLowerCase().includes(q))
     )
@@ -139,6 +139,7 @@ export default function SystemAdminUsers() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-gray-50 text-left">
+                <th className="px-4 py-3">Code</th>
                 <th className="px-4 py-3">Name</th>
                 <th className="px-4 py-3">Email</th>
                 <th className="px-4 py-3">Location</th>
@@ -149,6 +150,7 @@ export default function SystemAdminUsers() {
             <tbody>
               {filteredResidents.map((r) => (
                 <tr key={r.id} className="border-b hover:bg-gray-50">
+                  <td className="px-4 py-3 text-gray-600">{r.resident_code || '—'}</td>
                   <td className="px-4 py-3">
                     {[r.first_name, r.last_name].filter(Boolean).join(' ')}
                   </td>
@@ -185,6 +187,7 @@ export default function SystemAdminUsers() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-gray-50 text-left">
+                <th className="px-4 py-3">Code</th>
                 <th className="px-4 py-3">Business</th>
                 <th className="px-4 py-3">Owner</th>
                 <th className="px-4 py-3">Email</th>
@@ -195,6 +198,7 @@ export default function SystemAdminUsers() {
             <tbody>
               {filteredOwners.map((o) => (
                 <tr key={o.business_id} className="border-b hover:bg-gray-50">
+                  <td className="px-4 py-3 text-gray-600">{o.business_code || '—'}</td>
                   <td className="px-4 py-3">{o.business_name}</td>
                   <td className="px-4 py-3">{o.owner_name}</td>
                   <td className="px-4 py-3">{o.email}</td>

@@ -251,6 +251,11 @@ export default function CollectorDashboard() {
                 updating={updating === `request-${request.id}`}
               >
                 <div className="text-sm text-gray-600 space-y-1">
+                  {request.business_code && (
+                    <p className="text-xs text-gray-400">
+                      {request.business_code}
+                    </p>
+                  )}
                   <p>
                     Location: {Number(request.latitude).toFixed(5)},{' '}
                     {Number(request.longitude).toFixed(5)}

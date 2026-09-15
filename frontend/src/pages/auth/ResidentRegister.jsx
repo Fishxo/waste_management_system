@@ -3,6 +3,16 @@ import { Link, useNavigate } from 'react-router-dom'
 import api from '../../api/axios'
 import PasswordInput from '../../components/PasswordInput'
 
+const LOCATION_DATA = {
+  Abema: ['1', '2', '3', '4'],
+  Menkorer: ['1', '2', '3', '4'],
+  'Negus Teklehaymanot': ['1', '2', '3', '4'],
+  'Tedla Gualu': ['1', '2', '3', '4', '5'],
+}
+const SEFER_OPTIONS = ['1', '2', '3', '4']
+const SELECT_CLASS =
+  'border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400'
+
 export default function ResidentRegister() {
   const [form, setForm] = useState({
     firstName: '',
@@ -20,6 +30,21 @@ export default function ResidentRegister() {
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value })
+
+  const handleLocationChange = (e) => {
+    const { name, value } = e.target
+    if (name === 'kifleKetema') {
+      setForm((prev) => ({ ...prev, kifleKetema: value, kebele: '', sefer: '' }))
+    } else if (name === 'kebele') {
+      setForm((prev) => ({ ...prev, kebele: value, sefer: '' }))
+    } else {
+      setForm((prev) => ({ ...prev, sefer: value }))
+    }
+  }
+
+  const kebeleOptions = form.kifleKetema
+    ? LOCATION_DATA[form.kifleKetema] || []
+    : []
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -90,30 +115,50 @@ export default function ResidentRegister() {
             required
             className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
           />
-          <input
+          <select
             name="kifleKetema"
-            placeholder="Kifle Ketema (Sub-city)"
             value={form.kifleKetema}
-            onChange={handleChange}
+            onChange={handleLocationChange}
             required
-            className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          />
-          <input
+            className={SELECT_CLASS}
+          >
+            <option value="">Select Kifle Ketema</option>
+            {Object.keys(LOCATION_DATA).map((kk) => (
+              <option key={kk} value={kk}>
+                {kk}
+              </option>
+            ))}
+          </select>
+          <select
             name="kebele"
-            placeholder="Kebele"
             value={form.kebele}
-            onChange={handleChange}
+            onChange={handleLocationChange}
             required
-            className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          />
-          <input
+            disabled={!form.kifleKetema}
+            className={SELECT_CLASS}
+          >
+            <option value="">Select Kebele</option>
+            {kebeleOptions.map((k) => (
+              <option key={k} value={k}>
+                Kebele {k}
+              </option>
+            ))}
+          </select>
+          <select
             name="sefer"
-            placeholder="Sefer (Area/Landmark)"
             value={form.sefer}
-            onChange={handleChange}
+            onChange={handleLocationChange}
             required
-            className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          />
+            disabled={!form.kebele}
+            className={SELECT_CLASS}
+          >
+            <option value="">Select Sefer</option>
+            {SEFER_OPTIONS.map((s) => (
+              <option key={s} value={s}>
+                Sefer {s}
+              </option>
+            ))}
+          </select>
           <button
             type="submit"
             disabled={loading}

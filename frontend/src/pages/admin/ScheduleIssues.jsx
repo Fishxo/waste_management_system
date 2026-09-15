@@ -165,6 +165,11 @@ export default function AdminScheduleIssues() {
                   </td>
                   <td className="px-4 py-3">
                     <p className="font-medium">{fullName(issue)}</p>
+                    {issue.resident_code && (
+                      <p className="text-xs text-indigo-600 font-medium">
+                        {issue.resident_code}
+                      </p>
+                    )}
                     <p className="text-xs text-gray-500">
                       {issue.phone_number || 'No phone'}
                     </p>

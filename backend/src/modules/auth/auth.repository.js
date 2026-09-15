@@ -1,14 +1,23 @@
 const pool = require("../../database/db");
 
 exports.createResident = async (resident) => {
+  // Reserve the next internal id so the public code (RES-XXXXXX) can be set in
+  // the same insert; the column is NOT NULL with no default.
+  const seqResult = await pool.query(
+    `SELECT nextval(pg_get_serial_sequence('residents', 'id')) AS next_id`
+  );
+  const nextId = seqResult.rows[0].next_id;
+  const residentCode = `RES-${String(nextId).padStart(6, "0")}`;
+
   const query = `
     INSERT INTO residents
-    (first_name,last_name, email, password_hash,phone_number,kifle_ketema,kebele,sefer)
-    VALUES ($1, $2, $3,$4,$5,$6,$7,$8)
+    (id, first_name, last_name, email, password_hash, phone_number, kifle_ketema, kebele, sefer, resident_code)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
     RETURNING *
   `;
 
   const values = [
+    nextId,
     resident.firstName,
     resident.lastName,
     resident.email,
@@ -16,7 +25,8 @@ exports.createResident = async (resident) => {
     resident.phoneNumber,
     resident.kifleKetema,
     resident.kebele,
-    resident.sefer
+    resident.sefer,
+    residentCode
   ];
 
   const result = await pool.query(query, values);
@@ -44,14 +54,23 @@ exports.findResidentByIdentifier = async (identifier) => {
 };
 
 exports.createBusinessOwner = async (owner) => {
+  // Reserve the next internal business_id so the public code (BUS-XXXXXX) can
+  // be set in the same insert; the column is NOT NULL with no default.
+  const seqResult = await pool.query(
+    `SELECT nextval(pg_get_serial_sequence('business_owners', 'business_id')) AS next_id`
+  );
+  const nextId = seqResult.rows[0].next_id;
+  const businessCode = `BUS-${String(nextId).padStart(6, "0")}`;
+
   const query = `
     INSERT INTO business_owners
-    (business_name, owner_name, phone_number, email, password_hash, address, business_type, kebele, kifle_ketema)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    (business_id, business_name, owner_name, phone_number, email, password_hash, address, business_type, kebele, kifle_ketema, business_code)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
     RETURNING *
   `;
 
   const values = [
+    nextId,
     owner.businessName,
     owner.ownerName,
     owner.phoneNumber,
@@ -61,6 +80,7 @@ exports.createBusinessOwner = async (owner) => {
     owner.businessType,
     owner.kebele,
     owner.kifleKetema,
+    businessCode,
   ];
 
   const result = await pool.query(query, values);

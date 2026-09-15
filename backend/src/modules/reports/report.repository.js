@@ -162,6 +162,21 @@ exports.getReportHistory = async (reportId) => {
     return result.rows;
 };
 
+//counting the reports a resident created today
+exports.countReportsToday = async (residentId) => {
+    const query = `
+        SELECT COUNT(*)::int AS count
+        FROM reports
+        WHERE resident_id = $1
+          AND created_at >= CURRENT_DATE
+          AND ${LEGACY_SCHEDULE_ISSUE_FILTER}
+    `;
+
+    const result = await pool.query(query, [residentId]);
+
+    return result.rows[0].count;
+};
+
 //checking the report is existing 
 exports.findById = async (reportId) => {
     const result = await pool.query(

@@ -24,6 +24,7 @@ export default function BusinessOwnerLogin() {
       login(
         {
           id: owner.business_id,
+          businessCode: owner.business_code,
           businessName: owner.business_name,
           ownerName: owner.owner_name,
           email: owner.email,

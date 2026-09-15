@@ -4,6 +4,7 @@ exports.findBusinessOwnerById = async (id) => {
     const query = `
         SELECT
             business_id,
+            business_code,
             business_name,
             owner_name,
             email,
@@ -58,6 +59,7 @@ exports.updateBusinessOwnerProfile = async (id, data) => {
         WHERE business_id = $8
         RETURNING
             business_id,
+            business_code,
             business_name,
             owner_name,
             email,

@@ -19,6 +19,11 @@ export default function ProfileHeader({ profile, onEdit }) {
             <span className="bg-indigo-100 text-indigo-700 text-xs font-medium px-2.5 py-1 rounded-full">
               Resident
             </span>
+            {profile.residentCode && (
+              <span className="bg-gray-100 text-gray-700 text-xs font-medium px-2.5 py-1 rounded-full">
+                {profile.residentCode}
+              </span>
+            )}
           </div>
           <p className="text-gray-600 text-sm mt-1">
             {profile.email || 'Not provided'}

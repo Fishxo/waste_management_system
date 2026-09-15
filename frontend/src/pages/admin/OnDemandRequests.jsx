@@ -180,6 +180,7 @@ export default function AdminOnDemandRequests() {
                   </td>
                   <td className="px-4 py-3">
                     <p className="font-medium">{request.business_name}</p>
+                    <p className="text-xs text-gray-500">{request.business_code || ''}</p>
                     <p className="text-xs text-gray-500">{request.owner_name}</p>
                     <p className="text-xs text-gray-500">
                       {request.phone_number || 'No phone'}

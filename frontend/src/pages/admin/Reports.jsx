@@ -74,6 +74,7 @@ export default function AdminReports() {
           <table className="w-full bg-white rounded-lg shadow">
             <thead>
               <tr className="border-b bg-gray-50 text-left text-sm">
+                <th className="px-4 py-3 font-medium">Resident</th>
                 <th className="px-4 py-3 font-medium">Title</th>
                 <th className="px-4 py-3 font-medium">Description</th>
                 <th className="px-4 py-3 font-medium">Status</th>
@@ -84,6 +85,9 @@ export default function AdminReports() {
             <tbody>
               {reports.map((report) => (
                 <tr key={report.id || report._id} className="border-b hover:bg-gray-50 text-sm">
+                  <td className="px-4 py-3 font-medium text-gray-600">
+                    {report.resident_code || '—'}
+                  </td>
                   <td className="px-4 py-3">{report.title}</td>
                   <td className="px-4 py-3 max-w-xs truncate">{report.description}</td>
                   <td className="px-4 py-3">

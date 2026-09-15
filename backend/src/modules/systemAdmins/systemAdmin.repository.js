@@ -112,7 +112,7 @@ exports.updateCollectorActive = async (id, isActive) => {
 exports.getAllResidents = async () => {
     const result = await pool.query(`
         SELECT
-            id, first_name, last_name, email, phone_number,
+            id, resident_code, first_name, last_name, email, phone_number,
             kifle_ketema, kebele, sefer, is_active, created_at
         FROM residents
         ORDER BY created_at DESC
@@ -127,7 +127,7 @@ exports.updateResidentActive = async (id, isActive) => {
         UPDATE residents
         SET is_active = $2
         WHERE id = $1
-        RETURNING id, first_name, last_name, email, is_active
+        RETURNING id, resident_code, first_name, last_name, email, is_active
         `,
         [id, isActive]
     );
@@ -138,7 +138,7 @@ exports.updateResidentActive = async (id, isActive) => {
 exports.getAllBusinessOwners = async () => {
     const result = await pool.query(`
         SELECT
-            business_id, business_name, owner_name, email, phone_number,
+            business_id, business_code, business_name, owner_name, email, phone_number,
             kifle_ketema, kebele, is_active, created_at
         FROM business_owners
         ORDER BY created_at DESC
@@ -153,7 +153,7 @@ exports.updateBusinessOwnerActive = async (id, isActive) => {
         UPDATE business_owners
         SET is_active = $2
         WHERE business_id = $1
-        RETURNING business_id, business_name, owner_name, email, is_active
+        RETURNING business_id, business_code, business_name, owner_name, email, is_active
         `,
         [id, isActive]
     );

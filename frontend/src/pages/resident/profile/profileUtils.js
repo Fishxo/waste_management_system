@@ -7,6 +7,7 @@ export function normalizeProfile(raw = {}) {
   }
 
   return {
+    residentCode: get('resident_code', 'residentCode'),
     firstName: get('first_name', 'firstName'),
     lastName: get('last_name', 'lastName'),
     email: get('email'),

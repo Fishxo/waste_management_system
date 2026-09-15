@@ -17,6 +17,13 @@ router.get(
     reportController.getMyReports
 );
 
+//getting the daily report limit usage for the resident 
+router.get(
+    "/daily-count",
+    authMiddleware.authenticate,
+    reportController.getDailyCount
+);
+
 //getting the report by report id 
 router.get(
     "/:id",

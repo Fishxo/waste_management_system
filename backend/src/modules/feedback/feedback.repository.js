@@ -50,6 +50,10 @@ exports.getAllFeedback = async (kifleKetema) => {
                 WHEN f.submitter_role = 'business_owner' THEN b.email
             END AS submitter_email,
             CASE
+                WHEN f.submitter_role = 'resident' THEN r.resident_code
+                WHEN f.submitter_role = 'business_owner' THEN b.business_code
+            END AS submitter_code,
+            CASE
                 WHEN f.submitter_role = 'resident' THEN r.kifle_ketema
                 WHEN f.submitter_role = 'business_owner' THEN b.kifle_ketema
             END AS kifle_ketema

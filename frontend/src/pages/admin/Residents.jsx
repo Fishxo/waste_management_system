@@ -80,6 +80,7 @@ export default function AdminResidents() {
     if (!query) return residents
     return residents.filter((resident) =>
       [
+        resident.resident_code,
         resident.first_name,
         resident.last_name,
         resident.email,
@@ -214,6 +215,7 @@ export default function AdminResidents() {
             <table className="w-full bg-white">
               <thead>
                 <tr className="border-b bg-gray-50 text-left text-sm">
+                  <th className="px-4 py-3 font-medium">Code</th>
                   <th className="px-4 py-3 font-medium">Name</th>
                   <th className="px-4 py-3 font-medium">Email</th>
                   <th className="px-4 py-3 font-medium">Phone</th>
@@ -229,6 +231,9 @@ export default function AdminResidents() {
                     key={resident.id}
                     className="border-b hover:bg-gray-50 text-sm"
                   >
+                    <td className="px-4 py-3 font-medium text-gray-600">
+                      {resident.resident_code || '—'}
+                    </td>
                     <td className="px-4 py-3 font-medium">
                       {fullName(resident)}
                     </td>
@@ -316,6 +321,7 @@ export default function AdminResidents() {
                         </p>
                       </div>
                     </div>
+                    <DetailRow label="Resident Code" value={details?.resident_code} />
                     <DetailRow label="Email" value={details?.email} />
                     <DetailRow
                       label="Phone Number"

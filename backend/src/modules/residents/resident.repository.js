@@ -4,6 +4,7 @@ exports.findResidentById = async (id) => {
     const query = `
         SELECT 
             id,
+            resident_code,
             first_name,
             last_name,
             email,
@@ -57,6 +58,7 @@ exports.updateResidentProfile = async (id, data) => {
         WHERE id = $7
         RETURNING
             id,
+            resident_code,
             first_name,
             last_name,
             email,

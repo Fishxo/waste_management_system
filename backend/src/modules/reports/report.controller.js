@@ -25,7 +25,32 @@ exports.createReport = async (req, res) => {
             });
         }
 
+        if (err.message === "You have reached the maximum of 3 reports per day.") {
+            return res.status(400).json({
+                message: err.message,
+            });
+        }
+
         console.log("CREATE REPORT ERROR:", err);
+
+        res.status(500).json({
+            message: "Server error",
+        });
+    }
+};
+
+//getting the daily report limit usage for the resident
+exports.getDailyCount = async (req, res) => {
+    try {
+        const count = await reportService.getDailyReportCount(req.user.id);
+
+        res.status(200).json({
+            message: "Daily report count retrieved successfully",
+            data: count,
+        });
+
+    } catch (err) {
+        console.log("GET DAILY COUNT ERROR:", err);
 
         res.status(500).json({
             message: "Server error",

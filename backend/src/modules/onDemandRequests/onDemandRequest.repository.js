@@ -104,6 +104,7 @@ exports.getAllRequests = async (status, kifleKetema) => {
             r.confirmed_at,
             r.collector_notes,
             r.created_at,
+            b.business_code,
             b.business_name,
             b.owner_name,
             b.phone_number,

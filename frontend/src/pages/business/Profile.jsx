@@ -174,6 +174,11 @@ export default function BusinessProfile() {
               <span className="bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-1 rounded-full">
                 Business Owner
               </span>
+              {profile.businessCode && (
+                <span className="bg-gray-100 text-gray-600 text-xs font-medium px-2.5 py-1 rounded-full">
+                  {profile.businessCode}
+                </span>
+              )}
             </div>
             <p className="text-gray-600 text-sm mt-1">{profile.ownerName}</p>
             <p className="text-gray-500 text-sm mt-0.5">
@@ -332,6 +337,7 @@ export default function BusinessProfile() {
             </h2>
             <div className="mt-2">
               <InfoRow label="Business Name" value={profile.businessName} />
+              <InfoRow label="Business Code" value={profile.businessCode} />
               <InfoRow label="Owner Name" value={profile.ownerName} />
               <InfoRow label="Email" value={profile.email} />
               <InfoRow label="Phone Number" value={profile.phoneNumber} />

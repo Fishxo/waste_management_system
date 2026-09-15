@@ -90,6 +90,7 @@ exports.getAllIssues = async (status, kifleKetema) => {
             r.last_name,
             r.email,
             r.phone_number,
+            r.resident_code,
             s.kifle_ketema,
             s.kebele,
             s.sefer,

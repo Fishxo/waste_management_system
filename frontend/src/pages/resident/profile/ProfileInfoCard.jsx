@@ -17,6 +17,7 @@ function InfoRow({ label, value }) {
 
 export default function ProfileInfoCard({ profile }) {
   const rows = [
+    { label: 'Resident Code', value: profile.residentCode },
     { label: 'First Name', value: profile.firstName },
     { label: 'Last Name', value: profile.lastName },
     { label: 'Email', value: profile.email },

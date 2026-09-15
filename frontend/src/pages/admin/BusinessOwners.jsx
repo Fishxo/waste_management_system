@@ -66,6 +66,7 @@ export default function AdminBusinessOwners() {
     return owners.filter((owner) =>
       [
         owner.business_name,
+        owner.business_code,
         owner.owner_name,
         owner.email,
         owner.phone_number,
@@ -190,6 +191,7 @@ export default function AdminBusinessOwners() {
               <thead>
                 <tr className="border-b bg-gray-50 text-left text-sm">
                   <th className="px-4 py-3 font-medium">Business</th>
+                  <th className="px-4 py-3 font-medium">Code</th>
                   <th className="px-4 py-3 font-medium">Owner</th>
                   <th className="px-4 py-3 font-medium">Contact</th>
                   <th className="px-4 py-3 font-medium">Location</th>
@@ -206,6 +208,9 @@ export default function AdminBusinessOwners() {
                   >
                     <td className="px-4 py-3 font-medium">
                       {owner.business_name || '—'}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {owner.business_code || '—'}
                     </td>
                     <td className="px-4 py-3">{owner.owner_name || '—'}</td>
                     <td className="px-4 py-3">
@@ -276,6 +281,7 @@ export default function AdminBusinessOwners() {
             ) : (
               <>
                 <DetailRow label="Business Name" value={details?.business_name} />
+                <DetailRow label="Business Code" value={details?.business_code} />
                 <DetailRow label="Owner Name" value={details?.owner_name} />
                 <DetailRow label="Email" value={details?.email} />
                 <DetailRow label="Phone" value={details?.phone_number} />

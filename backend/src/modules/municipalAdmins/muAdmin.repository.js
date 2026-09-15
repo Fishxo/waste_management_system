@@ -41,6 +41,7 @@ exports.getAllReports = async (status, kifleKetema) => {
             r.status,
             r.created_at,
             res.id AS resident_id,
+            res.resident_code,
             res.first_name,
             res.last_name,
             res.email
@@ -103,6 +104,7 @@ exports.getAllResidents = async (kifleKetema) => {
     let query = `
         SELECT
             id,
+            resident_code,
             first_name,
             last_name,
             email,
@@ -133,6 +135,7 @@ exports.getResidentById = async (id, kifleKetema) => {
     let query = `
         SELECT
             id,
+            resident_code,
             first_name,
             last_name,
             email,
@@ -170,7 +173,7 @@ exports.deleteResidentById = async (id, kifleKetema) => {
         values.push(kifleKetema);
     }
 
-    query += ` RETURNING id, first_name, last_name, email`;
+    query += ` RETURNING id, resident_code, first_name, last_name, email`;
 
     const result = await pool.query(query, values);
     return result.rows[0] || null;
@@ -192,6 +195,7 @@ exports.updateResidentActive = async (id, isActive, kifleKetema) => {
     query += `
         RETURNING
             id,
+            resident_code,
             first_name,
             last_name,
             email,
@@ -207,6 +211,7 @@ exports.getAllBusinessOwners = async (kifleKetema) => {
     let query = `
         SELECT
             business_id,
+            business_code,
             business_name,
             owner_name,
             email,
@@ -238,6 +243,7 @@ exports.getBusinessOwnerById = async (id, kifleKetema) => {
     let query = `
         SELECT
             business_id,
+            business_code,
             business_name,
             owner_name,
             email,
@@ -276,7 +282,7 @@ exports.deleteBusinessOwnerById = async (id, kifleKetema) => {
         values.push(kifleKetema);
     }
 
-    query += ` RETURNING business_id, business_name, owner_name, email`;
+    query += ` RETURNING business_id, business_code, business_name, owner_name, email`;
 
     const result = await pool.query(query, values);
     return result.rows[0] || null;
@@ -298,6 +304,7 @@ exports.updateBusinessOwnerActive = async (id, isActive, kifleKetema) => {
     query += `
         RETURNING
             business_id,
+            business_code,
             business_name,
             owner_name,
             email,
