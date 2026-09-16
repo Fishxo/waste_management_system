@@ -16,7 +16,11 @@ exports.login = async (req, res) => {
         });
 
     } catch (err) {
-        if (err.message === "Invalid email or password") {
+        if (
+            err.message === "Invalid email or password" ||
+            err.message === "Your account has been deactivated" ||
+            err.message === "Your account has been resigned"
+        ) {
             return res.status(401).json({
                 message: err.message,
             });

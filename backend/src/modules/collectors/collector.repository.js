@@ -5,7 +5,7 @@ exports.createCollector = async (adminId, data) => {
         INSERT INTO collectors
         (full_name, phone_number, email, password_hash, kifle_ketema, created_by)
         VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING id, full_name, phone_number, email, kifle_ketema, is_active, created_at
+        RETURNING id, full_name, phone_number, email, kifle_ketema, is_active, status, resigned_at, resignation_reason, created_at
     `;
 
     const values = [
@@ -24,7 +24,7 @@ exports.createCollector = async (adminId, data) => {
 
 exports.findCollectorByEmail = async (email) => {
     const query = `
-        SELECT id, full_name, phone_number, email, password_hash, kifle_ketema, is_active, created_at
+        SELECT id, full_name, phone_number, email, password_hash, kifle_ketema, is_active, status, resigned_at, resignation_reason, created_at
         FROM collectors
         WHERE email = $1
     `;
@@ -36,7 +36,7 @@ exports.findCollectorByEmail = async (email) => {
 
 exports.findCollectorByPhone = async (phone) => {
     const query = `
-        SELECT id, full_name, phone_number, email, password_hash, kifle_ketema, is_active, created_at
+        SELECT id, full_name, phone_number, email, password_hash, kifle_ketema, is_active, status, resigned_at, resignation_reason, created_at
         FROM collectors
         WHERE phone_number = $1
     `;
@@ -55,7 +55,7 @@ exports.findCollectorByIdentifier = async (identifier) => {
 
 exports.findCollectorById = async (id) => {
     const query = `
-        SELECT id, full_name, phone_number, email, kifle_ketema, is_active, created_at
+        SELECT id, full_name, phone_number, email, kifle_ketema, is_active, status, resigned_at, resignation_reason, created_at
         FROM collectors
         WHERE id = $1
     `;
@@ -77,6 +77,72 @@ exports.findCollectorPasswordById = async (id) => {
     return result.rows[0] || null;
 };
 
+exports.updateCollectorStatus = async (id, status, reason, kifleKetema) => {
+    const isActive = status === "active";
+    const isResigned = status === "resigned";
+    const values = [id, status, isActive, isResigned, reason || null];
+    let query = `
+        UPDATE collectors
+        SET status = $2,
+            is_active = $3,
+            resigned_at = CASE WHEN $4 THEN CURRENT_TIMESTAMP ELSE NULL END,
+            resignation_reason = CASE WHEN $4 THEN $5 ELSE NULL END
+        WHERE id = $1
+    `;
+
+    if (kifleKetema) {
+        values.push(kifleKetema);
+        query += ` AND LOWER(kifle_ketema) = LOWER($6)`;
+    }
+
+    query += `
+        RETURNING id, full_name, phone_number, email, kifle_ketema,
+                  is_active, status, resigned_at, resignation_reason, created_at
+    `;
+
+    const result = await pool.query(query, values);
+
+    return result.rows[0] || null;
+};
+
+exports.updateCollectorProfile = async (
+    id,
+    data,
+    passwordHash,
+    kifleKetema
+) => {
+    const values = [id, data.fullName, data.phoneNumber, data.email];
+    let nextIndex = 5;
+    let query = `
+        UPDATE collectors
+        SET full_name = $2,
+            phone_number = $3,
+            email = $4
+    `;
+
+    if (passwordHash) {
+        values.push(passwordHash);
+        query += `, password_hash = $${nextIndex}`;
+        nextIndex += 1;
+    }
+
+    query += ` WHERE id = $1`;
+
+    if (kifleKetema) {
+        values.push(kifleKetema);
+        query += ` AND LOWER(kifle_ketema) = LOWER($${nextIndex})`;
+    }
+
+    query += `
+        RETURNING id, full_name, phone_number, email, kifle_ketema,
+                  is_active, status, resigned_at, resignation_reason, created_at
+    `;
+
+    const result = await pool.query(query, values);
+
+    return result.rows[0] || null;
+};
+
 exports.updateCollectorPassword = async (id, passwordHash) => {
     const query = `
         UPDATE collectors
@@ -89,7 +155,7 @@ exports.updateCollectorPassword = async (id, passwordHash) => {
 
 exports.getAllCollectors = async (kifleKetema) => {
     let query = `
-        SELECT id, full_name, phone_number, email, kifle_ketema, is_active, created_at
+        SELECT id, full_name, phone_number, email, kifle_ketema, is_active, status, resigned_at, resignation_reason, created_at
         FROM collectors
     `;
 

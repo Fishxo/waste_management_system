@@ -169,3 +169,162 @@ exports.getAllRecipientIds = async (recipientRole, kifleKetema = null) => {
 
     return [];
 };
+
+exports.getNotificationsForAdmin = async ({ adminId, adminKifle, recipientRole, type, search, page = 1, limit = 20 }) => {
+    const conditions = [];
+    const values = [];
+    let paramIndex = 1;
+
+    const scopeClauses = [];
+    if (adminId) {
+        scopeClauses.push(`n.created_by = $${paramIndex++}`);
+        values.push(adminId);
+    }
+
+    if (adminKifle) {
+        scopeClauses.push(`(
+            n.created_by IS NULL
+            AND (
+                (n.recipient_role = 'resident'
+                    AND EXISTS (
+                        SELECT 1 FROM residents r
+                        WHERE r.id = n.recipient_id
+                            AND LOWER(r.kifle_ketema) = LOWER($${paramIndex})
+                    ))
+                OR (n.recipient_role = 'collector'
+                    AND EXISTS (
+                        SELECT 1 FROM collectors c
+                        WHERE c.id = n.recipient_id
+                            AND LOWER(c.kifle_ketema) = LOWER($${paramIndex})
+                    ))
+                OR (n.recipient_role = 'business_owner'
+                    AND EXISTS (
+                        SELECT 1 FROM business_owners b
+                        WHERE b.business_id = n.recipient_id
+                            AND LOWER(b.kifle_ketema) = LOWER($${paramIndex})
+                    ))
+            )
+        )`);
+        values.push(adminKifle);
+        paramIndex++;
+    }
+
+    if (scopeClauses.length) {
+        conditions.push(`(${scopeClauses.join(" OR ")})`);
+    }
+
+    if (recipientRole) {
+        conditions.push(`n.recipient_role = $${paramIndex++}`);
+        values.push(recipientRole);
+    }
+
+    if (type) {
+        conditions.push(`n.type = $${paramIndex++}`);
+        values.push(type);
+    }
+
+    if (search) {
+        conditions.push(`(n.title ILIKE $${paramIndex} OR n.message ILIKE $${paramIndex})`);
+        values.push(`%${search}%`);
+        paramIndex++;
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+    const countQuery = `SELECT COUNT(*)::int AS total FROM notifications n ${whereClause}`;
+    const countResult = await pool.query(countQuery, values);
+    const total = countResult.rows[0].total;
+
+    const offset = (page - 1) * limit;
+    const dataQuery = `
+        SELECT n.id, n.recipient_role, n.recipient_id, n.title, n.message,
+               n.type, n.is_read, n.created_at,
+               ma.username AS sent_by_name
+        FROM notifications n
+        LEFT JOIN municipal_admins ma ON n.created_by = ma.id
+        ${whereClause}
+        ORDER BY n.created_at DESC
+        LIMIT $${paramIndex++} OFFSET $${paramIndex}
+    `;
+    values.push(limit, offset);
+
+    const dataResult = await pool.query(dataQuery, values);
+
+    return { notifications: dataResult.rows, total, page, limit };
+};
+
+exports.getNotificationStats = async (adminId = null, adminKifle = null) => {
+    const scopeClauses = [];
+    const params = [];
+
+    if (adminId) {
+        scopeClauses.push(`n.created_by = $${params.length + 1}`);
+        params.push(adminId);
+    }
+
+    if (adminKifle) {
+        scopeClauses.push(`(
+            n.created_by IS NULL
+            AND (
+                (n.recipient_role = 'resident'
+                    AND EXISTS (
+                        SELECT 1 FROM residents r
+                        WHERE r.id = n.recipient_id
+                            AND LOWER(r.kifle_ketema) = LOWER($${params.length + 1})
+                    ))
+                OR (n.recipient_role = 'collector'
+                    AND EXISTS (
+                        SELECT 1 FROM collectors c
+                        WHERE c.id = n.recipient_id
+                            AND LOWER(c.kifle_ketema) = LOWER($${params.length + 1})
+                    ))
+                OR (n.recipient_role = 'business_owner'
+                    AND EXISTS (
+                        SELECT 1 FROM business_owners b
+                        WHERE b.business_id = n.recipient_id
+                            AND LOWER(b.kifle_ketema) = LOWER($${params.length + 1})
+                    ))
+            )
+        )`);
+        params.push(adminKifle);
+    }
+
+    const where = scopeClauses.length
+        ? `WHERE (${scopeClauses.join(" OR ")})`
+        : "";
+
+    const totalQuery = `SELECT COUNT(*)::int AS total FROM notifications n ${where}`;
+    const totalResult = await pool.query(totalQuery, params);
+
+    const roleQuery = `
+        SELECT n.recipient_role, COUNT(*)::int AS count
+        FROM notifications n
+        ${where}
+        GROUP BY n.recipient_role
+    `;
+    const roleResult = await pool.query(roleQuery, params);
+
+    const typeQuery = `
+        SELECT n.type, COUNT(*)::int AS count
+        FROM notifications n
+        ${where}
+        GROUP BY n.type
+    `;
+    const typeResult = await pool.query(typeQuery, params);
+
+    const byRole = {};
+    roleResult.rows.forEach((row) => {
+        byRole[row.recipient_role] = row.count;
+    });
+
+    const byType = {};
+    typeResult.rows.forEach((row) => {
+        byType[row.type] = row.count;
+    });
+
+    return {
+        total: totalResult.rows[0].total,
+        byRole,
+        byType,
+    };
+};

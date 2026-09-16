@@ -289,6 +289,9 @@ export default function SystemAdminStaff() {
   const [submitting, setSubmitting] = useState(false)
   const [editingAdmin, setEditingAdmin] = useState(null)
   const [editingCollector, setEditingCollector] = useState(null)
+  const [statusUpdating, setStatusUpdating] = useState(null)
+  const [resignTarget, setResignTarget] = useState(null)
+  const [resignReason, setResignReason] = useState('')
 
   const [adminForm, setAdminForm] = useState({
     username: '',
@@ -387,6 +390,58 @@ export default function SystemAdminStaff() {
     setEditingAdmin(null)
     setEditingCollector(null)
     fetchData()
+  }
+
+  const adminStatus = (a) => a.status || (a.is_active ? 'active' : 'inactive')
+
+  const adminStatusStyles = {
+    active: 'bg-green-100 text-green-800',
+    inactive: 'bg-amber-100 text-amber-800',
+    resigned: 'bg-red-100 text-red-800',
+  }
+
+  const adminStatusLabels = {
+    active: 'Active',
+    inactive: 'Inactive',
+    resigned: 'Resigned',
+  }
+
+  const updateAdminStatus = async (id, status, reason = '') => {
+    setError('')
+    setStatusUpdating(id)
+    try {
+      await api.patch(`/systemAdmin/municipal-admins/${id}/status`, {
+        status,
+        reason,
+      })
+      setMessage(
+        status === 'resigned'
+          ? 'Municipal admin marked as resigned'
+          : status === 'active'
+            ? 'Municipal admin activated successfully'
+            : 'Municipal admin deactivated successfully'
+      )
+      setResignTarget(null)
+      setResignReason('')
+      fetchData()
+    } catch (err) {
+      setError(
+        err.response?.data?.message || 'Failed to update municipal admin status'
+      )
+    } finally {
+      setStatusUpdating(null)
+    }
+  }
+
+  const openResign = (admin) => {
+    setError('')
+    setResignReason('')
+    setResignTarget(admin)
+  }
+
+  const confirmResign = () => {
+    if (!resignTarget) return
+    updateAdminStatus(resignTarget.id, 'resigned', resignReason.trim())
   }
 
   if (loading) return <Loading />
@@ -554,6 +609,7 @@ export default function SystemAdminStaff() {
                     <th className="px-3 py-2">Username</th>
                     <th className="px-3 py-2">Email</th>
                     <th className="px-3 py-2">Sub-city</th>
+                    <th className="px-3 py-2">Status</th>
                     <th className="px-3 py-2">Action</th>
                   </tr>
                 </thead>
@@ -564,12 +620,87 @@ export default function SystemAdminStaff() {
                       <td className="px-3 py-2">{a.email}</td>
                       <td className="px-3 py-2">{a.kifle_ketema || '—'}</td>
                       <td className="px-3 py-2">
-                        <button
-                          onClick={() => setEditingAdmin(a)}
-                          className="text-violet-600 hover:underline cursor-pointer text-xs"
-                        >
-                          Edit
-                        </button>
+                        {(() => {
+                          const s = adminStatus(a)
+                          return (
+                            <div>
+                              <span
+                                className={`text-xs px-2 py-0.5 rounded ${
+                                  adminStatusStyles[s] ||
+                                  'bg-gray-100 text-gray-800'
+                                }`}
+                              >
+                                {adminStatusLabels[s] || s}
+                              </span>
+                              {s === 'resigned' && (
+                                <div className="mt-1 text-xs text-gray-500 space-y-0.5">
+                                  {a.resigned_at && (
+                                    <p>
+                                      {new Date(
+                                        a.resigned_at
+                                      ).toLocaleDateString()}
+                                    </p>
+                                  )}
+                                  {a.resignation_reason && (
+                                    <p className="italic">
+                                      {a.resignation_reason}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })()}
+                      </td>
+                      <td className="px-3 py-2 text-xs">
+                        {statusUpdating === a.id ? (
+                          <span className="text-gray-400">
+                            Updating...
+                          </span>
+                        ) : (
+                          <div className="space-x-3">
+                            <button
+                              onClick={() => setEditingAdmin(a)}
+                              className="text-violet-600 hover:underline cursor-pointer text-xs"
+                            >
+                              Edit
+                            </button>
+                            {adminStatus(a) === 'resigned' ? (
+                              <button
+                                onClick={() =>
+                                  updateAdminStatus(a.id, 'active')
+                                }
+                                className="text-green-700 hover:underline cursor-pointer text-xs"
+                              >
+                                Reinstate
+                              </button>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() =>
+                                    updateAdminStatus(
+                                      a.id,
+                                      adminStatus(a) === 'active'
+                                        ? 'inactive'
+                                        : 'active'
+                                    )
+                                  }
+                                  className="text-amber-700 hover:underline cursor-pointer text-xs"
+                                >
+                                  {adminStatus(a) === 'active'
+                                    ? 'Deactivate'
+                                    : 'Activate'}
+                                </button>
+                                <button
+                                  onClick={() => openResign(a)}
+                                  className="text-red-700 hover:underline cursor-pointer text-xs"
+                                >
+                                  Resign
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -649,6 +780,45 @@ export default function SystemAdminStaff() {
         onClose={() => setEditingCollector(null)}
         onSave={handleEditSaved}
       />
+
+      {resignTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Resign Municipal Admin
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Mark <strong>{resignTarget.username}</strong> as resigned?
+              They will not be able to log in until reinstated.
+            </p>
+            <textarea
+              rows={3}
+              placeholder="Reason (optional)"
+              value={resignReason}
+              onChange={(e) => setResignReason(e.target.value)}
+              maxLength={500}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 mb-4"
+            />
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setResignTarget(null)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmResign}
+                disabled={statusUpdating === resignTarget.id}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded disabled:opacity-50 cursor-pointer"
+              >
+                {statusUpdating === resignTarget.id
+                  ? 'Processing...'
+                  : 'Confirm Resign'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

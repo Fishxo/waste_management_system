@@ -8,11 +8,21 @@ const {
     authenticateMuAdmin,
 } = require("../../middleware/muAdminAuth.middleware");
 
+const logActivity = require("../../utils/activityLogger");
+
 // create schedule
 router.post(
     "/",
     authenticateMuAdmin,
     scheduleValidation.createSchedule,
+    logActivity({
+        action: "create_schedule",
+        entityType: "schedule",
+        getEntityId: (req, body) => {
+            const id = body?.data?.id;
+            return id ? Number(id) : null;
+        },
+    }),
     scheduleController.createSchedule
 );
 
@@ -27,6 +37,7 @@ router.patch(
     "/:id",
     authenticateMuAdmin,
     scheduleValidation.updateSchedule,
+    logActivity({ action: "update_schedule", entityType: "schedule" }),
     scheduleController.updateSchedule
 );
 

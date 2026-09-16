@@ -7,6 +7,8 @@ const notificationService = require("../notifications/notification.service");
 
 const COLLECTOR_UPDATE_STATUSES = ["pending", "in_progress", "completed", "failed"];
 
+const COLLECTOR_LIFECYCLE_STATUSES = ["active", "inactive", "resigned"];
+
 const STATUS_TRANSITIONS = {
     assigned: ["pending", "in_progress", "completed", "failed"],
     pending: ["in_progress", "completed", "failed"],
@@ -31,6 +33,10 @@ exports.login = async (identifier, password) => {
 
     if (!collector) {
         throw new Error("Invalid email or password");
+    }
+
+    if (collector.status === "resigned") {
+        throw new Error("Your account has been resigned");
     }
 
     if (collector.is_active === false) {
@@ -63,6 +69,49 @@ exports.login = async (identifier, password) => {
 
 exports.getAllCollectors = async (kifleKetema) => {
     return await collectorRepository.getAllCollectors(kifleKetema);
+};
+
+exports.updateCollectorStatus = async (
+    adminKifleKetema,
+    id,
+    status,
+    reason
+) => {
+    if (!COLLECTOR_LIFECYCLE_STATUSES.includes(status)) {
+        throw new Error("Invalid collector status");
+    }
+
+    const collector = await collectorRepository.updateCollectorStatus(
+        id,
+        status,
+        reason,
+        adminKifleKetema
+    );
+
+    if (!collector) {
+        throw new Error("Collector not found");
+    }
+
+    return collector;
+};
+
+exports.updateCollectorProfile = async (adminKifleKetema, id, data) => {
+    const passwordHash = data.password
+        ? await bcrypt.hash(data.password, 10)
+        : null;
+
+    const collector = await collectorRepository.updateCollectorProfile(
+        id,
+        data,
+        passwordHash,
+        adminKifleKetema
+    );
+
+    if (!collector) {
+        throw new Error("Collector not found");
+    }
+
+    return collector;
 };
 
 exports.changePassword = async (id, currentPassword, newPassword) => {

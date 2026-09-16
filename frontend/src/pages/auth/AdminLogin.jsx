@@ -43,14 +43,11 @@ export default function AdminLogin() {
 
       navigate('/admin/dashboard')
     } catch (err) {
-      const status = err.response?.status
       const msg =
-        status === 401
+        err.response?.data?.message ||
+        (err.response?.status === 401
           ? 'Invalid email or password'
-          : err.response?.data?.message ||
-            (typeof err.response?.data === 'string'
-              ? err.response.data
-              : 'Login failed')
+          : 'Login failed')
       setError(msg)
     } finally {
       setLoading(false)

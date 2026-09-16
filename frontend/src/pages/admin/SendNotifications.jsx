@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import api from '../../api/axios'
+import { useAuth } from '../../context/AuthContext'
 
 const recipientRoles = [
   { value: 'resident', label: 'Residents' },
@@ -8,10 +9,12 @@ const recipientRoles = [
 ]
 
 export default function AdminSendNotifications() {
+  const { user } = useAuth()
+  const scopeKifle = user?.kifleKetema || ''
   const [form, setForm] = useState({
     recipientRole: 'resident',
     recipientId: '',
-    kifleKetema: '',
+    kifleKetema: scopeKifle,
     title: '',
     message: '',
   })
@@ -36,9 +39,6 @@ export default function AdminSendNotifications() {
       if (form.recipientId) {
         payload.recipientId = Number(form.recipientId)
       }
-      if (form.kifleKetema.trim()) {
-        payload.kifleKetema = form.kifleKetema.trim()
-      }
 
       const { data } = await api.post('/muAdmin/notifications', payload)
       const count = data.data?.count || 1
@@ -46,7 +46,7 @@ export default function AdminSendNotifications() {
       setForm({
         recipientRole: form.recipientRole,
         recipientId: '',
-        kifleKetema: '',
+        kifleKetema: scopeKifle,
         title: '',
         message: '',
       })
@@ -119,15 +119,25 @@ export default function AdminSendNotifications() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Sub-city filter (optional)
+            Sub-city
           </label>
           <input
             name="kifleKetema"
-            placeholder="e.g. Bole — only when broadcasting"
             value={form.kifleKetema}
-            onChange={handleChange}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            readOnly={!!scopeKifle}
+            disabled={!!scopeKifle}
+            className={`border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-400 ${scopeKifle ? 'bg-gray-50' : ''}`}
           />
+          {scopeKifle ? (
+            <p className="text-xs text-gray-500 mt-1">
+              Notifications are sent only to {scopeKifle} sub-city. Broadcasts to
+              other sub-cities are not allowed.
+            </p>
+          ) : (
+            <p className="text-xs text-gray-400 mt-1">
+              No sub-city assigned to your account; contact the system admin.
+            </p>
+          )}
         </div>
 
         <div>

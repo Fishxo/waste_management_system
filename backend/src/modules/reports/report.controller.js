@@ -3,7 +3,7 @@ const reportService = require("./report.service");
 exports.createReport = async (req, res) => {
     try {
         const report = await reportService.createReport(
-            req.user.id,
+            req.user,
             req.body
         );
 
@@ -19,7 +19,7 @@ exports.createReport = async (req, res) => {
             });
         }
 
-        if (err.message === "Resident not found") {
+        if (err.message === "Resident not found" || err.message === "Collector not found") {
             return res.status(404).json({
                 message: err.message,
             });
@@ -39,10 +39,10 @@ exports.createReport = async (req, res) => {
     }
 };
 
-//getting the daily report limit usage for the resident
+//getting the daily report limit usage for the resident or collector
 exports.getDailyCount = async (req, res) => {
     try {
-        const count = await reportService.getDailyReportCount(req.user.id);
+        const count = await reportService.getDailyReportCount(req.user);
 
         res.status(200).json({
             message: "Daily report count retrieved successfully",
@@ -61,9 +61,7 @@ exports.getDailyCount = async (req, res) => {
 //getting the reports back to the user 
 exports.getMyReports = async (req, res) => {
     try {
-        const reports = await reportService.getReportsByResidentId(
-            req.user.id
-        );
+        const reports = await reportService.getMyReports(req.user);
 
         res.status(200).json({
             message: "Reports retrieved successfully",
@@ -84,7 +82,7 @@ exports.getReportById = async (req, res) => {
     try {
         const report = await reportService.getReportById(
             req.params.id,
-            req.user.id
+            req.user
         );
 
         res.status(200).json({
@@ -114,17 +112,12 @@ exports.getReportHistory = async (req, res) => {
 
         const { id } = req.params;
 
-        const residentId = req.user.id;
-
-        console.log("REPORT ID:", req.params.id);
-console.log("USER FROM TOKEN:", req.user);
-
+        const user = req.user;
 
         const history = await reportService.getReportHistory(
             id,
-            residentId
+            user
         );
-
 
         res.status(200).json({
             message: "Report history retrieved successfully",
@@ -157,7 +150,7 @@ exports.updateReport = async (req, res, next) => {
         const updatedReport = await reportService.updateReport(
             reportId,
             req.body,
-            req.user.id
+            req.user
         );
         res.status(200).json({
             message: "report update successfully",
@@ -171,7 +164,7 @@ exports.updateReport = async (req, res, next) => {
             });
         }
 
-        if (err.message === "resident is not found") {
+        if (err.message === "resident is not found" || err.message === "collector is not found") {
             return res.status(403).json({
                 message: err.message,
             });
@@ -199,7 +192,7 @@ exports.deleteReport = async (req, res, next) => {
 
         const report = await reportService.deleteReport(
             reportId,
-            req.user.id
+            req.user
         );
 
         res.status(200).json({

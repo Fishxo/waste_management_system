@@ -10,6 +10,25 @@ const statusBadge = {
   resolved: 'bg-green-100 text-green-800',
 }
 
+const roleBadge = {
+  collector: {
+    label: 'Collector',
+    cls: 'bg-sky-100 text-sky-800',
+  },
+  resident: {
+    label: 'Resident',
+    cls: 'bg-indigo-100 text-indigo-800',
+  },
+}
+
+function reporterLabel(report) {
+  if (report.reporter_role === 'collector') {
+    return report.collector_name || 'Collector'
+  }
+  const name = [report.first_name, report.last_name].filter(Boolean).join(' ')
+  return name || report.resident_code || '—'
+}
+
 export default function AdminReports() {
   const [reports, setReports] = useState([])
   const [filter, setFilter] = useState('')
@@ -74,7 +93,7 @@ export default function AdminReports() {
           <table className="w-full bg-white rounded-lg shadow">
             <thead>
               <tr className="border-b bg-gray-50 text-left text-sm">
-                <th className="px-4 py-3 font-medium">Resident</th>
+                <th className="px-4 py-3 font-medium">Reporter</th>
                 <th className="px-4 py-3 font-medium">Title</th>
                 <th className="px-4 py-3 font-medium">Description</th>
                 <th className="px-4 py-3 font-medium">Status</th>
@@ -83,10 +102,15 @@ export default function AdminReports() {
               </tr>
             </thead>
             <tbody>
-              {reports.map((report) => (
+              {reports.map((report) => {
+                const role = roleBadge[report.reporter_role] || roleBadge.resident
+                return (
                 <tr key={report.id || report._id} className="border-b hover:bg-gray-50 text-sm">
-                  <td className="px-4 py-3 font-medium text-gray-600">
-                    {report.resident_code || '—'}
+                  <td className="px-4 py-3">
+                    <p className="font-medium text-gray-800">{reporterLabel(report)}</p>
+                    <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-semibold ${role.cls}`}>
+                      {role.label}
+                    </span>
                   </td>
                   <td className="px-4 py-3">{report.title}</td>
                   <td className="px-4 py-3 max-w-xs truncate">{report.description}</td>
@@ -128,7 +152,8 @@ export default function AdminReports() {
                     </select>
                   </td>
                 </tr>
-              ))}
+              )
+              })}
             </tbody>
           </table>
         </div>

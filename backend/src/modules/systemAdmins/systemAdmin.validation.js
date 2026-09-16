@@ -47,6 +47,30 @@ exports.updateMunicipalAdmin = (req, res, next) => {
     next();
 };
 
+exports.updateMunicipalAdminStatus = (req, res, next) => {
+    const { status, reason } = req.body;
+
+    if (!status) {
+        return res.status(400).json({
+            message: "Status is required",
+        });
+    }
+
+    if (!["active", "inactive", "resigned"].includes(status)) {
+        return res.status(400).json({
+            message: "Invalid status. Allowed values are: active, inactive, resigned",
+        });
+    }
+
+    if (reason && String(reason).length > 500) {
+        return res.status(400).json({
+            message: "Reason must be 500 characters or less",
+        });
+    }
+
+    next();
+};
+
 exports.createCollector = (req, res, next) => {
     const { fullName, phoneNumber, email, password, kifleKetema } = req.body;
 

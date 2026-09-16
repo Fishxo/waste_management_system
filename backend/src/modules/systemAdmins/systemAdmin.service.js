@@ -87,6 +87,26 @@ exports.updateMunicipalAdmin = async (id, data) => {
     return admin;
 };
 
+const MUNICIPAL_ADMIN_STATUSES = ["active", "inactive", "resigned"];
+
+exports.updateMunicipalAdminStatus = async (id, status, reason) => {
+    if (!MUNICIPAL_ADMIN_STATUSES.includes(status)) {
+        throw new Error("Invalid municipal admin status");
+    }
+
+    const admin = await systemAdminRepository.updateMunicipalAdminStatus(
+        id,
+        status,
+        reason
+    );
+
+    if (!admin) {
+        throw new Error("Municipal admin not found");
+    }
+
+    return admin;
+};
+
 exports.getCollectors = async () => {
     return await systemAdminRepository.getAllCollectors();
 };
@@ -195,4 +215,21 @@ exports.restoreDatabase = async (sqlContent, systemAdminId) => {
     }
 
     return await backupService.restoreFromSql(sqlContent, systemAdminId);
+};
+
+exports.getReports = async (filters) => {
+    return await systemAdminRepository.getReports(filters);
+};
+
+exports.getReportsStats = async () => {
+    const stats = await systemAdminRepository.getReportsStats();
+
+    return {
+        total: Number(stats.total),
+        pending: Number(stats.pending),
+        inProgress: Number(stats.inProgress),
+        resolved: Number(stats.resolved),
+        byReporter: stats.byReporter,
+        byKifle: stats.byKifle,
+    };
 };

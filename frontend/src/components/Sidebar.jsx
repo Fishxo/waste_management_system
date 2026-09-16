@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useNotification } from '../context/NotificationContext'
 
@@ -24,7 +24,10 @@ const adminLinks = [
   { to: '/admin/on-demand-requests', label: 'On-Demand Requests', icon: '🚛' },
   { to: '/admin/collectors', label: 'Collectors', icon: '🧑‍🔧' },
   { to: '/admin/send-notifications', label: 'Send Notifications', icon: '📢' },
+  { to: '/admin/notification-history', label: 'Notification History', icon: '📜' },
   { to: '/admin/feedback', label: 'Feedback', icon: '💬' },
+  { to: '/admin/messages', label: 'Message System Admin', icon: '✉️' },
+  { to: '/admin/delete-requests', label: 'Delete Requests', icon: '🗑️' },
 ]
 
 const businessLinks = [
@@ -39,6 +42,16 @@ const businessLinks = [
 
 const collectorLinks = [
   { to: '/collector/dashboard', label: 'Dashboard', icon: '📊' },
+  { to: '/collector/reports/create', label: 'Create Report', icon: '📝' },
+  {
+    to: '/collector/reports',
+    label: 'My Reports',
+    icon: '📋',
+    isActive: (pathname) =>
+      pathname === '/collector/reports' ||
+      (pathname.startsWith('/collector/reports/') &&
+        !pathname.startsWith('/collector/reports/create')),
+  },
   { to: '/collector/notifications', label: 'Notifications', icon: '🔔' },
   { to: '/collector/change-password', label: 'Change Password', icon: '🔑' },
 ]
@@ -47,12 +60,17 @@ const systemAdminLinks = [
   { to: '/system-admin/dashboard', label: 'Dashboard', icon: '📊' },
   { to: '/system-admin/staff', label: 'Staff', icon: '🧑‍💼' },
   { to: '/system-admin/users', label: 'Users', icon: '👥' },
+  { to: '/system-admin/reports', label: 'Reports', icon: '📋' },
+  { to: '/system-admin/activity-logs', label: 'Activity Log', icon: '📜' },
+  { to: '/system-admin/messages', label: 'Admin Messages', icon: '✉️' },
+  { to: '/system-admin/delete-requests', label: 'Delete Requests', icon: '🗑️' },
   { to: '/system-admin/backup', label: 'Backup & Restore', icon: '💾' },
 ]
 
 export default function Sidebar() {
   const { user } = useAuth()
   const { unreadCount } = useNotification()
+  const location = useLocation()
   const isAdmin = user?.role === 'municipal_admin'
   const isSystemAdmin = user?.role === 'system_admin'
   const isBusiness = user?.role === 'business_owner'
@@ -85,13 +103,16 @@ export default function Sidebar() {
           <NavLink
             key={link.to}
             to={link.to}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded text-sm transition ${
-                isActive
+            className={({ isActive }) => {
+              const active = link.isActive
+                ? link.isActive(location.pathname)
+                : isActive
+              return `flex items-center gap-3 px-3 py-2.5 rounded text-sm transition ${
+                active
                   ? 'bg-indigo-600 text-white'
                   : 'text-gray-300 hover:bg-gray-800'
               }`
-            }
+            }}
           >
             <span>{link.icon}</span>
             <span className="flex-1">{link.label}</span>

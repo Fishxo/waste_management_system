@@ -4,64 +4,76 @@ const pool = require("../../database/db");
 const LEGACY_SCHEDULE_ISSUE_FILTER = `
     description NOT LIKE '%Related collection schedule:%'
 `;
+// maps a reporter role to the ownership column on the reports table
+function getOwnerColumn(role) {
+    return role === "collector" ? "collector_id" : "resident_id";
+}
+
 //creating the users reports for database 
-exports.createReport = async (residentId, data) => {
+exports.createReport = async ({ role, ownerId }, data) => {
+    const reporterRole = role === "collector" ? "collector" : "resident";
+    const ownerColumn = getOwnerColumn(role);
     const query = `
         INSERT INTO reports
-        (resident_id, title, description)
-        VALUES ($1, $2, $3)
+        (${ownerColumn}, reporter_role, title, description)
+        VALUES ($1, $2, $3, $4)
         RETURNING *
     `;
 
-    const values = [
-        residentId,
+    const result = await pool.query(query, [
+        ownerId,
+        reporterRole,
         data.title,
         data.description
-    ];
-
-    const result = await pool.query(query, values);
+    ]);
 
     return result.rows[0];
 };
 
-//getting the reports for resident
-exports.getReportsByResidentId = async (residentId) => {
+//getting the reports for a resident or collector
+exports.getMyReports = async ({ role, ownerId }) => {
+    const ownerColumn = getOwnerColumn(role);
     const query = `
         SELECT
             id,
             resident_id,
+            collector_id,
+            reporter_role,
             title,
             description,
             status,
             created_at
         FROM reports
-        WHERE resident_id = $1
+        WHERE ${ownerColumn} = $1
           AND ${LEGACY_SCHEDULE_ISSUE_FILTER}
         ORDER BY created_at DESC
     `;
 
-    const result = await pool.query(query, [residentId]);
+    const result = await pool.query(query, [ownerId]);
 
     return result.rows;
 };
 
 //getting a report using specifice id 
-exports.getReportById = async (reportId, residentId) => {
+exports.getReportById = async (reportId, { role, ownerId }) => {
+    const ownerColumn = getOwnerColumn(role);
     const query = `
         SELECT
             id,
             resident_id,
+            collector_id,
+            reporter_role,
             title,
             description,
             status,
             created_at
         FROM reports
         WHERE id = $1
-          AND resident_id = $2
+          AND ${ownerColumn} = $2
           AND ${LEGACY_SCHEDULE_ISSUE_FILTER}
     `;
 
-    const result = await pool.query(query, [reportId, residentId]);
+    const result = await pool.query(query, [reportId, ownerId]);
 
     return result.rows[0];
 };
@@ -162,17 +174,18 @@ exports.getReportHistory = async (reportId) => {
     return result.rows;
 };
 
-//counting the reports a resident created today
-exports.countReportsToday = async (residentId) => {
+//counting the reports a resident or collector created today
+exports.countReportsToday = async ({ role, ownerId }) => {
+    const ownerColumn = getOwnerColumn(role);
     const query = `
         SELECT COUNT(*)::int AS count
         FROM reports
-        WHERE resident_id = $1
+        WHERE ${ownerColumn} = $1
           AND created_at >= CURRENT_DATE
           AND ${LEGACY_SCHEDULE_ISSUE_FILTER}
     `;
 
-    const result = await pool.query(query, [residentId]);
+    const result = await pool.query(query, [ownerId]);
 
     return result.rows[0].count;
 };

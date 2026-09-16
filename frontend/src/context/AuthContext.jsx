@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import api from '../api/axios'
 
 const AuthContext = createContext(null)
 
@@ -45,7 +46,20 @@ export function AuthProvider({ children }) {
     setUser(userData)
   }
 
-  const logout = () => {
+  const logout = async () => {
+    const endpoints = {
+      system_admin: '/systemAdmin/logout',
+      municipal_admin: '/muAdmin/logout',
+      collector: '/collectors/logout',
+    }
+    const url = endpoints[user?.role]
+    if (url) {
+      try {
+        await api.post(url)
+      } catch {
+        // ignore errors on logout; the session is cleared regardless
+      }
+    }
     localStorage.removeItem('user')
     localStorage.removeItem('token')
     localStorage.removeItem('adminUser')

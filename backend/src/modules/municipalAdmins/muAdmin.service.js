@@ -11,6 +11,14 @@ exports.login = async (email, password) => {
         throw new Error("Invalid email or password");
     }
 
+    if (admin.status === "resigned") {
+        throw new Error("Your account has been resigned");
+    }
+
+    if (admin.is_active === false) {
+        throw new Error("Your account has been deactivated");
+    }
+
     const isPasswordValid = await bcrypt.compare(
         password,
         admin.password

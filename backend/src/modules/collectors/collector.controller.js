@@ -27,7 +27,8 @@ exports.login = async (req, res) => {
     } catch (err) {
         if (
             err.message === "Invalid email or password" ||
-            err.message === "Your account has been deactivated"
+            err.message === "Your account has been deactivated" ||
+            err.message === "Your account has been resigned"
         ) {
             return res.status(401).json({ message: err.message });
         }
@@ -181,6 +182,64 @@ exports.getAllCollectors = async (req, res) => {
             data: collectors,
         });
     } catch (err) {
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+exports.updateCollectorStatus = async (req, res) => {
+    try {
+        const kifleKetema = getAdminKifleKetema(req);
+        const collector = await collectorService.updateCollectorStatus(
+            kifleKetema,
+            req.params.id,
+            req.body.status,
+            req.body.reason
+        );
+
+        res.status(200).json({
+            message: "Collector status updated successfully",
+            data: collector,
+        });
+    } catch (err) {
+        if (err.message === "Collector not found") {
+            return res.status(404).json({ message: err.message });
+        }
+
+        if (err.message === "Invalid collector status") {
+            return res.status(400).json({ message: err.message });
+        }
+
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+exports.updateCollectorProfile = async (req, res) => {
+    try {
+        const kifleKetema = getAdminKifleKetema(req);
+        const collector = await collectorService.updateCollectorProfile(
+            kifleKetema,
+            req.params.id,
+            req.body
+        );
+
+        res.status(200).json({
+            message: "Collector updated successfully",
+            data: collector,
+        });
+    } catch (err) {
+        if (err.code === "23505") {
+            const field = err.detail?.includes("phone_number")
+                ? "Phone number"
+                : "Email";
+            return res.status(409).json({
+                message: `${field} already exists`,
+            });
+        }
+
+        if (err.message === "Collector not found") {
+            return res.status(404).json({ message: err.message });
+        }
+
         res.status(500).json({ message: "Server error" });
     }
 };

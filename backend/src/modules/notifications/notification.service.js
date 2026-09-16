@@ -93,8 +93,8 @@ exports.markAllAsRead = async (recipientRole, recipientId) => {
     return await notificationRepository.markAllAsRead(recipientRole, recipientId);
 };
 
-exports.sendManualNotification = async (adminId, data) => {
-    const { recipientRole, recipientId, kifleKetema, title, message } = data;
+exports.sendManualNotification = async (adminId, adminKifle, data) => {
+    const { recipientRole, recipientId, title, message } = data;
 
     if (!VALID_ROLES.includes(recipientRole)) {
         throw new Error("Invalid recipient role");
@@ -117,9 +117,13 @@ exports.sendManualNotification = async (adminId, data) => {
         ];
     }
 
+    if (!adminKifle) {
+        throw new Error("Your account is not assigned to a sub-city");
+    }
+
     const ids = await notificationRepository.getAllRecipientIds(
         recipientRole,
-        kifleKetema || null
+        adminKifle
     );
 
     if (!ids.length) {
@@ -127,4 +131,15 @@ exports.sendManualNotification = async (adminId, data) => {
     }
 
     return await exports.notifyMany(ids, payload);
+};
+
+exports.getNotificationsForAdmin = async (filters) => {
+    return await notificationRepository.getNotificationsForAdmin(filters);
+};
+
+exports.getNotificationStats = async (adminId, adminKifle) => {
+    return await notificationRepository.getNotificationStats(
+        adminId || null,
+        adminKifle || null
+    );
 };

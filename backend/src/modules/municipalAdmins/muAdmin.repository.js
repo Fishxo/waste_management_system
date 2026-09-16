@@ -12,6 +12,8 @@ exports.findAdminByEmail = async (email) => {
             email,
             password,
             kifle_ketema,
+            is_active,
+            status,
             created_at
         FROM municipal_admins
         WHERE email = $1
@@ -125,21 +127,31 @@ exports.getAllReports = async (status, kifleKetema) => {
             r.description,
             r.status,
             r.created_at,
+            r.reporter_role,
             res.id AS resident_id,
             res.resident_code,
             res.first_name,
             res.last_name,
-            res.email
+            res.email,
+            res.kifle_ketema AS resident_kifle_ketema,
+            col.id AS collector_id,
+            col.full_name AS collector_name,
+            col.phone_number AS collector_phone,
+            col.kifle_ketema AS collector_kifle_ketema
         FROM reports r
-        JOIN residents res
+        LEFT JOIN residents res
             ON r.resident_id = res.id
+        LEFT JOIN collectors col
+            ON r.collector_id = col.id
     `;
 
     const values = [];
     const conditions = [];
 
     if (kifleKetema) {
-        conditions.push(`LOWER(res.kifle_ketema) = LOWER($${values.length + 1})`);
+        conditions.push(
+            `LOWER(COALESCE(res.kifle_ketema, col.kifle_ketema)) = LOWER($${values.length + 1})`
+        );
         values.push(kifleKetema);
     }
 
@@ -166,10 +178,25 @@ exports.getDashboardStatistics = async (kifleKetema) => {
         ? `
         SELECT
             (SELECT COUNT(*) FROM residents WHERE LOWER(kifle_ketema) = LOWER($1)) AS total_residents,
-            (SELECT COUNT(*) FROM reports r JOIN residents res ON r.resident_id = res.id WHERE LOWER(res.kifle_ketema) = LOWER($1)) AS total_reports,
-            (SELECT COUNT(*) FROM reports r JOIN residents res ON r.resident_id = res.id WHERE LOWER(res.kifle_ketema) = LOWER($1) AND r.status = 'pending') AS pending_reports,
-            (SELECT COUNT(*) FROM reports r JOIN residents res ON r.resident_id = res.id WHERE LOWER(res.kifle_ketema) = LOWER($1) AND r.status = 'in_progress') AS in_progress_reports,
-            (SELECT COUNT(*) FROM reports r JOIN residents res ON r.resident_id = res.id WHERE LOWER(res.kifle_ketema) = LOWER($1) AND r.status = 'resolved') AS resolved_reports
+            (SELECT COUNT(*) FROM reports r
+                LEFT JOIN residents res ON r.resident_id = res.id
+                LEFT JOIN collectors col ON r.collector_id = col.id
+                WHERE LOWER(COALESCE(res.kifle_ketema, col.kifle_ketema)) = LOWER($1)) AS total_reports,
+            (SELECT COUNT(*) FROM reports r
+                LEFT JOIN residents res ON r.resident_id = res.id
+                LEFT JOIN collectors col ON r.collector_id = col.id
+                WHERE LOWER(COALESCE(res.kifle_ketema, col.kifle_ketema)) = LOWER($1)
+                    AND r.status = 'pending') AS pending_reports,
+            (SELECT COUNT(*) FROM reports r
+                LEFT JOIN residents res ON r.resident_id = res.id
+                LEFT JOIN collectors col ON r.collector_id = col.id
+                WHERE LOWER(COALESCE(res.kifle_ketema, col.kifle_ketema)) = LOWER($1)
+                    AND r.status = 'in_progress') AS in_progress_reports,
+            (SELECT COUNT(*) FROM reports r
+                LEFT JOIN residents res ON r.resident_id = res.id
+                LEFT JOIN collectors col ON r.collector_id = col.id
+                WHERE LOWER(COALESCE(res.kifle_ketema, col.kifle_ketema)) = LOWER($1)
+                    AND r.status = 'resolved') AS resolved_reports
         `
         : `
         SELECT

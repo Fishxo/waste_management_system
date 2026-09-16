@@ -89,6 +89,61 @@ exports.updateCollectionStatus = (req, res, next) => {
     next();
 };
 
+exports.updateCollectorStatus = (req, res, next) => {
+    const { status, reason } = req.body;
+
+    if (!status) {
+        return res.status(400).json({
+            message: "Status is required",
+        });
+    }
+
+    if (!["active", "inactive", "resigned"].includes(status)) {
+        return res.status(400).json({
+            message: "Invalid status. Allowed values are: active, inactive, resigned",
+        });
+    }
+
+    if (reason && String(reason).length > 500) {
+        return res.status(400).json({
+            message: "Reason must be 500 characters or less",
+        });
+    }
+
+    next();
+};
+
+exports.updateCollectorProfile = (req, res, next) => {
+    const { fullName, phoneNumber, email, password } = req.body;
+
+    if (!fullName || !phoneNumber || !email) {
+        return res.status(400).json({
+            message: "Full name, phone number and email are required",
+        });
+    }
+
+    if (fullName.length < 3) {
+        return res.status(400).json({
+            message: "Full name should be at least 3 characters",
+        });
+    }
+
+    if (!/^(09|07)\d{8}$/.test(phoneNumber)) {
+        return res.status(400).json({
+            message:
+                "Phone number should be 10 characters and start with 09 or 07",
+        });
+    }
+
+    if (password && password.length < 6) {
+        return res.status(400).json({
+            message: "New password should be at least 6 characters",
+        });
+    }
+
+    next();
+};
+
 exports.assignCollector = (req, res, next) => {
     const { collectorId } = req.body;
 

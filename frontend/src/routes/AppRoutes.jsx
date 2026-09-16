@@ -33,6 +33,10 @@ import AdminCollectors from '../pages/admin/Collectors'
 import CollectorLogin from '../pages/auth/CollectorLogin'
 import CollectorDashboard from '../pages/collector/Dashboard'
 import CollectorChangePassword from '../pages/collector/ChangePassword'
+import CollectorCreateReport from '../pages/collector/CreateReport'
+import CollectorMyReports from '../pages/collector/MyReports'
+import CollectorReportDetails from '../pages/collector/ReportDetails'
+import CollectorUpdateReport from '../pages/collector/UpdateReport'
 import BusinessDashboard from '../pages/business/Dashboard'
 import BusinessProfile from '../pages/business/Profile'
 import BusinessSchedules from '../pages/business/Schedules'
@@ -40,12 +44,19 @@ import CreateOnDemandRequest from '../pages/business/CreateOnDemandRequest'
 import MyOnDemandRequests from '../pages/business/MyOnDemandRequests'
 import NotificationsPage from '../pages/shared/Notifications'
 import AdminSendNotifications from '../pages/admin/SendNotifications'
+import AdminNotificationHistory from '../pages/admin/NotificationHistory'
 import AdminFeedback from '../pages/admin/Feedback'
+import AdminMessagesToSystemAdmin from '../pages/admin/MessagesToSystemAdmin'
+import AdminDeleteRequests from '../pages/admin/DeleteRequests'
 import FeedbackPage from '../pages/shared/Feedback'
 import SystemAdminDashboard from '../pages/system-admin/Dashboard'
 import SystemAdminStaff from '../pages/system-admin/Staff'
 import SystemAdminUsers from '../pages/system-admin/Users'
 import SystemAdminBackup from '../pages/system-admin/BackupRestore'
+import SystemAdminActivityLogs from '../pages/system-admin/ActivityLogs'
+import SystemAdminReports from '../pages/system-admin/Reports'
+import SystemAdminMessages from '../pages/system-admin/AdminMessages'
+import SystemAdminDeleteRequests from '../pages/system-admin/DeleteRequests'
 
 function DashboardLayout({ children }) {
   return (
@@ -277,6 +288,46 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/collector/reports"
+        element={
+          <ProtectedRoute role="collector">
+            <DashboardLayout>
+              <CollectorMyReports />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/collector/reports/create"
+        element={
+          <ProtectedRoute role="collector">
+            <DashboardLayout>
+              <CollectorCreateReport />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/collector/reports/:id"
+        element={
+          <ProtectedRoute role="collector">
+            <DashboardLayout>
+              <CollectorReportDetails />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/collector/reports/:id/edit"
+        element={
+          <ProtectedRoute role="collector">
+            <DashboardLayout>
+              <CollectorUpdateReport />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
 
       <Route
         path="/admin/dashboard"
@@ -379,11 +430,41 @@ export default function AppRoutes() {
         }
       />
       <Route
+        path="/admin/notification-history"
+        element={
+          <ProtectedRoute role="municipal_admin">
+            <DashboardLayout>
+              <AdminNotificationHistory />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/admin/feedback"
         element={
           <ProtectedRoute role="municipal_admin">
             <DashboardLayout>
               <AdminFeedback />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/messages"
+        element={
+          <ProtectedRoute role="municipal_admin">
+            <DashboardLayout>
+              <AdminMessagesToSystemAdmin />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/delete-requests"
+        element={
+          <ProtectedRoute role="municipal_admin">
+            <DashboardLayout>
+              <AdminDeleteRequests />
             </DashboardLayout>
           </ProtectedRoute>
         }
@@ -425,6 +506,46 @@ export default function AppRoutes() {
           <ProtectedRoute role="system_admin">
             <DashboardLayout>
               <SystemAdminBackup />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/system-admin/activity-logs"
+        element={
+          <ProtectedRoute role="system_admin">
+            <DashboardLayout>
+              <SystemAdminActivityLogs />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/system-admin/reports"
+        element={
+          <ProtectedRoute role="system_admin">
+            <DashboardLayout>
+              <SystemAdminReports />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/system-admin/messages"
+        element={
+          <ProtectedRoute role="system_admin">
+            <DashboardLayout>
+              <SystemAdminMessages />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/system-admin/delete-requests"
+        element={
+          <ProtectedRoute role="system_admin">
+            <DashboardLayout>
+              <SystemAdminDeleteRequests />
             </DashboardLayout>
           </ProtectedRoute>
         }

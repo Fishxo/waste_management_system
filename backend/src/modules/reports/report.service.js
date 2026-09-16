@@ -1,5 +1,6 @@
 const reportRepository = require("./report.repository");
 const residentRepository = require("../residents/resident.repository");
+const collectorRepository = require("../collectors/collector.repository");
 
 function isLegacyScheduleIssueReport(report) {
     return (
@@ -7,10 +8,18 @@ function isLegacyScheduleIssueReport(report) {
     );
 }
 
+function getReporterRole(role) {
+    return role === "collector" ? "collector" : "resident";
+}
+
 const MAX_DAILY_REPORTS = 3;
 
-exports.getDailyReportCount = async (residentId) => {
-    const used = await reportRepository.countReportsToday(residentId);
+exports.getDailyReportCount = async (user) => {
+    const role = getReporterRole(user.role);
+    const used = await reportRepository.countReportsToday({
+        role,
+        ownerId: user.id,
+    });
 
     return {
         used,
@@ -19,44 +28,64 @@ exports.getDailyReportCount = async (residentId) => {
     };
 };
 
-exports.createReport = async (residentId, data) => {
-    const resident = await residentRepository.findResidentActiveStatus(residentId);
+exports.createReport = async (user, data) => {
+    const role = getReporterRole(user.role);
 
-    if (!resident) {
-        throw new Error("Resident not found");
+    if (role === "collector") {
+        const collector = await collectorRepository.findCollectorById(user.id);
+
+        if (!collector) {
+            throw new Error("Collector not found");
+        }
+
+        if (!collector.is_active) {
+            throw new Error("Your account has been deactivated");
+        }
+    } else {
+        const resident = await residentRepository.findResidentActiveStatus(user.id);
+
+        if (!resident) {
+            throw new Error("Resident not found");
+        }
+
+        if (resident.is_active === false) {
+            throw new Error("Your account has been deactivated");
+        }
     }
 
-    if (resident.is_active === false) {
-        throw new Error("Your account has been deactivated");
-    }
-
-    const todayCount = await reportRepository.countReportsToday(residentId);
+    const todayCount = await reportRepository.countReportsToday({
+        role,
+        ownerId: user.id,
+    });
 
     if (todayCount >= MAX_DAILY_REPORTS) {
         throw new Error("You have reached the maximum of 3 reports per day.");
     }
 
     const report = await reportRepository.createReport(
-        residentId,
+        { role, ownerId: user.id },
         data
     );
 
     return report;
 };
 
-//getting the whole report made by resident
-exports.getReportsByResidentId = async (residentId) => {
-    const reports = await reportRepository.getReportsByResidentId(residentId);
+//getting the whole report made by resident or collector
+exports.getMyReports = async (user) => {
+    const reports = await reportRepository.getMyReports({
+        role: getReporterRole(user.role),
+        ownerId: user.id,
+    });
 
     return reports;
 };
 
 //getting report by report id 
-exports.getReportById = async (reportId, residentId) => {
-    const report = await reportRepository.getReportById(
-        reportId,
-        residentId
-    );
+exports.getReportById = async (reportId, user) => {
+    const report = await reportRepository.getReportById(reportId, {
+        role: getReporterRole(user.role),
+        ownerId: user.id,
+    });
 
     if (!report) {
         throw new Error("Report not found");
@@ -66,12 +95,12 @@ exports.getReportById = async (reportId, residentId) => {
 };
 
 // getting report history
-exports.getReportHistory = async (reportId, residentId) => {
+exports.getReportHistory = async (reportId, user) => {
 
-    const report = await reportRepository.getReportById(
-        reportId,
-        residentId
-    );
+    const report = await reportRepository.getReportById(reportId, {
+        role: getReporterRole(user.role),
+        ownerId: user.id,
+    });
 
     if (!report) {
         throw new Error("Report not found");
@@ -84,7 +113,7 @@ exports.getReportHistory = async (reportId, residentId) => {
 
 
 //making update the report from the user side 
-exports.updateReport = async (reportId, data, residentId) => {
+exports.updateReport = async (reportId, data, user) => {
 
     const report = await reportRepository.findById(reportId);
 
@@ -92,28 +121,48 @@ exports.updateReport = async (reportId, data, residentId) => {
     if (!report || isLegacyScheduleIssueReport(report)) {
         throw new Error("report not found")
     }
-    
-    if (report.resident_id !== residentId) {
-        throw new Error("resident is not found");
+
+    const role = getReporterRole(user.role);
+
+    if (role === "collector") {
+        if (report.collector_id !== user.id) {
+            throw new Error("collector is not found");
+        }
+
+        const collector = await collectorRepository.findCollectorById(user.id);
+
+        if (!collector) {
+            throw new Error("Collector not found");
+        }
+
+        if (!collector.is_active) {
+            throw new Error("your account has been deactivated, you can not make update");
+        }
+    } else {
+        if (report.resident_id !== user.id) {
+            throw new Error("resident is not found");
+        }
+
+        const resident = await residentRepository.findResidentActiveStatus(user.id);
+
+        if (!resident) {
+            throw new Error("Resident not found");
+        }
+
+        if (resident.is_active === false) {
+            throw new Error("your account has been deactivated, you can not make update");
+        }
     }
+
     if (report.status == "in_progress") {
         throw new Error("report in progress state can not be edit");
-    }
-    const resident = await residentRepository.findResidentActiveStatus(residentId);
-
-    if (!resident) {
-        throw new Error("Resident not found");
-    }
-
-    if (resident.is_active === false) {
-        throw new Error("your account has been deactivated, you can not make update");
     }
     return await reportRepository.updateReport(reportId, data);
     
 };
 
-//making delete report from the resident side 
-exports.deleteReport = async (reportId, residentId) => {
+//making delete report from the resident or collector side 
+exports.deleteReport = async (reportId, user) => {
 
     const report = await reportRepository.findById(reportId);
 
@@ -121,7 +170,13 @@ exports.deleteReport = async (reportId, residentId) => {
         throw new Error("Report not found");
     }
 
-    if (report.resident_id !== residentId) {
+    const role = getReporterRole(user.role);
+    const ownedByUser =
+        role === "collector"
+            ? report.collector_id === user.id
+            : report.resident_id === user.id;
+
+    if (!ownedByUser) {
         throw new Error("You cannot delete this report");
     }
 

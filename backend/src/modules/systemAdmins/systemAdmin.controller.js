@@ -96,6 +96,31 @@ exports.updateMunicipalAdmin = async (req, res) => {
     }
 };
 
+exports.updateMunicipalAdminStatus = async (req, res) => {
+    try {
+        const admin = await systemAdminService.updateMunicipalAdminStatus(
+            req.params.id,
+            req.body.status,
+            req.body.reason
+        );
+
+        res.status(200).json({
+            message: "Municipal admin status updated successfully",
+            data: admin,
+        });
+    } catch (err) {
+        if (err.message === "Municipal admin not found") {
+            return res.status(404).json({ message: err.message });
+        }
+
+        if (err.message === "Invalid municipal admin status") {
+            return res.status(400).json({ message: err.message });
+        }
+
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
 exports.getCollectors = async (req, res) => {
     try {
         const collectors = await systemAdminService.getCollectors();
@@ -360,5 +385,46 @@ exports.restoreDatabase = async (req, res) => {
         res.status(500).json({
             message: err.message || "Failed to restore database",
         });
+    }
+};
+
+exports.getReports = async (req, res) => {
+    try {
+        const { status, kifleKetema, search } = req.query;
+        const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+        const limit = Math.min(
+            Math.max(parseInt(req.query.limit, 10) || 20, 1),
+            100
+        );
+
+        const data = await systemAdminService.getReports({
+            status: status || null,
+            kifleKetema: kifleKetema || null,
+            search: search || null,
+            page,
+            limit,
+        });
+
+        res.status(200).json({
+            message: "Reports retrieved successfully",
+            data,
+        });
+    } catch (err) {
+        console.log("GET REPORTS ERROR:", err);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+exports.getReportsStats = async (req, res) => {
+    try {
+        const stats = await systemAdminService.getReportsStats();
+
+        res.status(200).json({
+            message: "Report statistics retrieved successfully",
+            data: stats,
+        });
+    } catch (err) {
+        console.log("GET REPORTS STATS ERROR:", err);
+        res.status(500).json({ message: "Server error" });
     }
 };
