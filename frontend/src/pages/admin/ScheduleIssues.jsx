@@ -3,6 +3,11 @@ import api from '../../api/axios'
 import Loading from '../../components/Loading'
 
 const statusOptions = ['', 'pending', 'reviewing', 'resolved']
+const reporterTypeOptions = [
+  { value: '', label: 'All reporters' },
+  { value: 'resident', label: 'Residents' },
+  { value: 'business', label: 'Business Owners' },
+]
 
 const statusBadge = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -37,6 +42,9 @@ function formatDate(value) {
 }
 
 function fullName(issue) {
+  if (issue.business_id) {
+    return issue.business_owner_name || issue.business_name || 'Business Owner'
+  }
   return [issue.first_name, issue.last_name].filter(Boolean).join(' ') || '—'
 }
 
@@ -48,16 +56,19 @@ function formatStatus(status) {
 export default function AdminScheduleIssues() {
   const [issues, setIssues] = useState([])
   const [filter, setFilter] = useState('')
+  const [typeFilter, setTypeFilter] = useState('')
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(null)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
-  const fetchIssues = (status = '') => {
+  const fetchIssues = (status = '', type = '') => {
     setLoading(true)
-    const url = status
-      ? `/muAdmin/schedule-issues?status=${status}`
-      : '/muAdmin/schedule-issues'
+    const params = new URLSearchParams()
+    if (status) params.set('status', status)
+    if (type) params.set('type', type)
+    const qs = params.toString()
+    const url = qs ? `/muAdmin/schedule-issues?${qs}` : '/muAdmin/schedule-issues'
     api
       .get(url)
       .then(({ data }) => {
@@ -71,8 +82,8 @@ export default function AdminScheduleIssues() {
   }
 
   useEffect(() => {
-    fetchIssues(filter)
-  }, [filter])
+    fetchIssues(filter, typeFilter)
+  }, [filter, typeFilter])
 
   useEffect(() => {
     if (!message) return
@@ -89,7 +100,7 @@ export default function AdminScheduleIssues() {
         status: newStatus,
       })
       setMessage('Issue status updated successfully')
-      fetchIssues(filter)
+      fetchIssues(filter, typeFilter)
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update issue status')
     } finally {
@@ -104,23 +115,39 @@ export default function AdminScheduleIssues() {
         Issues raised by residents when a collection schedule was not followed.
       </p>
 
-      <div className="mb-4 flex flex-wrap gap-2">
-        {statusOptions.map((s) => (
-          <button
-            key={s || 'all'}
-            onClick={() => {
-              setError('')
-              setFilter(s)
-            }}
-            className={`px-4 py-1.5 rounded text-sm cursor-pointer ${
-              filter === s
-                ? 'bg-indigo-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            {formatStatus(s)}
-          </button>
-        ))}
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap gap-2">
+          {statusOptions.map((s) => (
+            <button
+              key={s || 'all'}
+              onClick={() => {
+                setError('')
+                setFilter(s)
+              }}
+              className={`px-4 py-1.5 rounded text-sm cursor-pointer ${
+                filter === s
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              {formatStatus(s)}
+            </button>
+          ))}
+        </div>
+        <select
+          value={typeFilter}
+          onChange={(e) => {
+            setError('')
+            setTypeFilter(e.target.value)
+          }}
+          className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+        >
+          {reporterTypeOptions.map((opt) => (
+            <option key={opt.value || 'all'} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       {message && (
@@ -145,7 +172,7 @@ export default function AdminScheduleIssues() {
             <thead>
               <tr className="border-b bg-gray-50 text-left text-sm">
                 <th className="px-4 py-3 font-medium">Issue</th>
-                <th className="px-4 py-3 font-medium">Resident</th>
+                <th className="px-4 py-3 font-medium">Reporter</th>
                 <th className="px-4 py-3 font-medium">Location</th>
                 <th className="px-4 py-3 font-medium">Schedule</th>
                 <th className="px-4 py-3 font-medium">Issue description</th>
@@ -165,13 +192,17 @@ export default function AdminScheduleIssues() {
                   </td>
                   <td className="px-4 py-3">
                     <p className="font-medium">{fullName(issue)}</p>
-                    {issue.resident_code && (
+                    {issue.business_id && issue.business_code ? (
+                      <p className="text-xs text-amber-600 font-medium">
+                        {issue.business_code}
+                      </p>
+                    ) : issue.resident_code && (
                       <p className="text-xs text-indigo-600 font-medium">
                         {issue.resident_code}
                       </p>
                     )}
                     <p className="text-xs text-gray-500">
-                      {issue.phone_number || 'No phone'}
+                      {issue.business_email || issue.phone_number || 'No phone'}
                     </p>
                     <p className="text-xs text-gray-500">
                       {issue.email || 'No email'}

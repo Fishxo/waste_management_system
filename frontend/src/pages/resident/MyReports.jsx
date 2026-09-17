@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import api from '../../api/axios'
 import Loading from '../../components/Loading'
 
@@ -9,12 +10,6 @@ const statusBadge = {
   pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
   in_progress: 'bg-orange-100 text-orange-800 border-orange-200',
   resolved: 'bg-green-100 text-green-800 border-green-200',
-}
-
-const statusHelp = {
-  pending: 'Waiting for the municipal admin to review your report.',
-  in_progress: 'The municipal admin is working on your report.',
-  resolved: 'Your report has been resolved.',
 }
 
 function formatDate(value) {
@@ -28,9 +23,9 @@ function formatDate(value) {
   })
 }
 
-function formatStatus(status) {
-  if (!status) return 'All'
-  return status.replace('_', ' ')
+function formatStatus(status, t) {
+  if (!status) return t('common.all')
+  return t(`common.${status}`)
 }
 
 function truncate(text, max = 140) {
@@ -40,6 +35,7 @@ function truncate(text, max = 140) {
 }
 
 export default function MyReports() {
+  const { t } = useTranslation()
   const [reports, setReports] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('')
@@ -58,7 +54,7 @@ export default function MyReports() {
       })
       .catch((err) => {
         setReports([])
-        setError(err.response?.data?.message || 'Failed to load reports')
+        setError(err.response?.data?.message || t('reports.failedToLoad'))
       })
       .finally(() => setLoading(false))
   }
@@ -94,11 +90,11 @@ export default function MyReports() {
     setError('')
     try {
       await api.delete(`/reports/${deleteTarget.id}`)
-      setMessage('Report deleted successfully')
+      setMessage(t('reports.reportDeleted'))
       setDeleteTarget(null)
       fetchReports()
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to delete report')
+      setError(err.response?.data?.message || t('reports.failedToDelete'))
     } finally {
       setDeleting(false)
     }
@@ -110,15 +106,14 @@ export default function MyReports() {
     <div>
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-2xl font-bold mb-2">My Reports</h2>
+          <h2 className="text-2xl font-bold mb-2">{t('reports.title')}</h2>
           <p className="text-gray-500 max-w-2xl">
-            General waste reports you submitted. Schedule collection issues are
-            listed separately on{' '}
+            {t('reports.intro')}{' '}
             <Link
               to="/resident/my-schedule-issues"
               className="text-indigo-600 hover:underline"
             >
-              Schedule Issues
+              {t('sidebar.scheduleIssues')}
             </Link>
             .
           </p>
@@ -127,25 +122,25 @@ export default function MyReports() {
           to="/resident/create-report"
           className="inline-flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition shrink-0"
         >
-          + Create Report
+          {t('reports.createReport')}
         </Link>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-gray-400">Total</p>
+          <p className="text-xs uppercase tracking-wide text-gray-400">{t('reports.total')}</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</p>
         </div>
         <div className="bg-white rounded-xl border border-yellow-200 p-4 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-yellow-700">Pending</p>
+          <p className="text-xs uppercase tracking-wide text-yellow-700">{t('common.pending')}</p>
           <p className="text-2xl font-bold text-yellow-800 mt-1">{stats.pending}</p>
         </div>
         <div className="bg-white rounded-xl border border-orange-200 p-4 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-orange-700">In Progress</p>
+          <p className="text-xs uppercase tracking-wide text-orange-700">{t('common.inProgress')}</p>
           <p className="text-2xl font-bold text-orange-800 mt-1">{stats.inProgress}</p>
         </div>
         <div className="bg-white rounded-xl border border-green-200 p-4 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-green-700">Resolved</p>
+          <p className="text-xs uppercase tracking-wide text-green-700">{t('common.resolved')}</p>
           <p className="text-2xl font-bold text-green-800 mt-1">{stats.resolved}</p>
         </div>
       </div>
@@ -162,7 +157,7 @@ export default function MyReports() {
                 : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
             }`}
           >
-            {formatStatus(status) || 'All'}
+            {formatStatus(status, t)}
           </button>
         ))}
       </div>
@@ -183,16 +178,20 @@ export default function MyReports() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
           <div className="text-4xl mb-3">📋</div>
           <p className="text-gray-600">
-            {filter ? `No ${formatStatus(filter)} reports found.` : 'No waste reports found.'}
+            {filter
+              ? t('reports.noFilterReports', {
+                  status: formatStatus(filter, t),
+                })
+              : t('reports.noReports')}
           </p>
           <p className="text-sm text-gray-400 mt-1">
             <Link
               to="/resident/create-report"
               className="text-indigo-600 hover:underline"
             >
-              Create a report
+              {t('reports.createReportLink')}
             </Link>{' '}
-            for general waste problems in your area.
+            {t('reports.forGeneralWaste')}
           </p>
         </div>
       ) : (
@@ -209,7 +208,7 @@ export default function MyReports() {
                 <div className="flex items-start justify-between gap-3 mb-4">
                   <div className="min-w-0">
                     <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                      Report #{reportId}
+                      {t('reports.reportNumber', { id: reportId })}
                     </p>
                     <h3 className="text-lg font-bold text-gray-900 mt-1 break-words">
                       {report.title}
@@ -220,23 +219,25 @@ export default function MyReports() {
                       statusBadge[report.status] || 'bg-gray-100 text-gray-800 border-gray-200'
                     }`}
                   >
-                    {formatStatus(report.status)}
+                    {formatStatus(report.status, t)}
                   </span>
                 </div>
 
                 <div className="rounded-xl bg-gray-50 border border-gray-200 p-4 text-sm text-gray-700 mb-4 flex-1">
                   <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-                    Description
+                    {t('reports.description')}
                   </p>
                   <p className="whitespace-pre-wrap">{truncate(report.description, 220)}</p>
                 </div>
 
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm mb-4">
                   <p className="text-gray-500">
-                    Submitted on {formatDate(report.created_at)}
+                    {t('reports.submittedOn', {
+                      date: formatDate(report.created_at),
+                    })}
                   </p>
                   <p className="text-gray-600">
-                    {statusHelp[report.status] || 'Status updated by the municipal admin.'}
+                    {t(`reports.help${report.status ? report.status.charAt(0).toUpperCase() + report.status.slice(1).replace('_', '') : 'Default'}`)}
                   </p>
                 </div>
 
@@ -245,7 +246,7 @@ export default function MyReports() {
                     to={`/resident/my-reports/${reportId}`}
                     className="inline-flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition"
                   >
-                    View Details
+                    {t('reports.viewDetails')}
                   </Link>
                   {isPending && (
                     <>
@@ -253,14 +254,14 @@ export default function MyReports() {
                         to={`/resident/my-reports/${reportId}/edit`}
                         className="inline-flex items-center justify-center bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-50 py-2 px-4 rounded-lg text-sm font-medium transition"
                       >
-                        Edit
+                        {t('reports.edit')}
                       </Link>
                       <button
                         type="button"
                         onClick={() => setDeleteTarget(report)}
                         className="inline-flex items-center justify-center bg-white border border-red-200 text-red-700 hover:bg-red-50 py-2 px-4 rounded-lg text-sm font-medium transition cursor-pointer"
                       >
-                        Delete
+                        {t('reports.delete')}
                       </button>
                     </>
                   )}
@@ -274,15 +275,15 @@ export default function MyReports() {
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Delete Report?</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">{t('reports.deleteTitle')}</h3>
             <p className="text-sm text-gray-600 mb-1">
-              This will permanently remove your report:
+              {t('reports.deletePermanent')}
             </p>
             <p className="text-sm font-medium text-gray-900 mb-4">
               {deleteTarget.title}
             </p>
             <p className="text-sm text-gray-500 mb-6">
-              Only pending reports can be deleted. This action cannot be undone.
+              {t('reports.deleteOnlyPending')}
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <button
@@ -291,7 +292,7 @@ export default function MyReports() {
                 disabled={deleting}
                 className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg text-sm font-medium disabled:opacity-50 cursor-pointer"
               >
-                {deleting ? 'Deleting...' : 'Yes, Delete Report'}
+                {deleting ? t('reports.deleting') : t('reports.confirmDelete')}
               </button>
               <button
                 type="button"
@@ -299,7 +300,7 @@ export default function MyReports() {
                 disabled={deleting}
                 className="bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-lg text-sm font-medium cursor-pointer"
               >
-                Cancel
+                {t('reports.cancel')}
               </button>
             </div>
           </div>

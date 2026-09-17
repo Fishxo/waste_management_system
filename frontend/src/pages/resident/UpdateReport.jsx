@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import api from '../../api/axios'
 import Loading from '../../components/Loading'
 
+const LETTER_PATTERN = /[a-zA-Z\u1200-\u137F]/
+
 export default function UpdateReport() {
   const { id } = useParams()
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [form, setForm] = useState({ title: '', description: '' })
   const [errors, setErrors] = useState({})
@@ -24,7 +28,7 @@ export default function UpdateReport() {
         })
       })
       .catch((err) => {
-        setError(err.response?.data?.message || 'Failed to load report')
+        setError(err.response?.data?.message || t('reports.failedToLoadReport'))
       })
       .finally(() => setLoading(false))
   }, [id])
@@ -37,19 +41,19 @@ export default function UpdateReport() {
   const validate = () => {
     const nextErrors = {}
     if (!form.title.trim()) {
-      nextErrors.title = 'Title is required'
+      nextErrors.title = t('reports.titleRequired')
     } else if (form.title.trim().length < 3) {
-      nextErrors.title = 'Title should be at least 3 characters'
-    } else if (!/[a-zA-Z]/.test(form.title)) {
-      nextErrors.title = 'Title must contain at least one letter'
+      nextErrors.title = t('reports.titleMinLength')
+    } else if (!LETTER_PATTERN.test(form.title)) {
+      nextErrors.title = t('reports.titleLetters')
     }
 
     if (!form.description.trim()) {
-      nextErrors.description = 'Description is required'
+      nextErrors.description = t('reports.descriptionRequired')
     } else if (form.description.trim().length < 10) {
-      nextErrors.description = 'Description should be at least 10 characters'
-    } else if (!/[a-zA-Z]/.test(form.description)) {
-      nextErrors.description = 'Description must contain at least one letter'
+      nextErrors.description = t('reports.descriptionMinLength')
+    } else if (!LETTER_PATTERN.test(form.description)) {
+      nextErrors.description = t('reports.descriptionLetters')
     }
 
     setErrors(nextErrors)
@@ -67,10 +71,10 @@ export default function UpdateReport() {
         title: form.title.trim(),
         description: form.description.trim(),
       })
-      setMessage('Report updated successfully')
+      setMessage(t('reports.reportUpdated'))
     } catch (err) {
       setError(
-        err.response?.data?.message || 'Failed to update report'
+        err.response?.data?.message || t('reports.failedToUpdate')
       )
     } finally {
       setSaving(false)
@@ -85,9 +89,9 @@ export default function UpdateReport() {
         to="/resident/my-reports"
         className="text-indigo-600 hover:underline text-sm mb-4 inline-block"
       >
-        &larr; Back to My Reports
+        {t('reports.backToMyReports')}
       </Link>
-      <h2 className="text-2xl font-bold mb-6">Update Report</h2>
+      <h2 className="text-2xl font-bold mb-6">{t('reports.updateTitle')}</h2>
 
       <div className="bg-white rounded-lg shadow p-6 w-full max-w-lg">
         {message && (
@@ -103,7 +107,7 @@ export default function UpdateReport() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Title
+              {t('reports.title')}
             </label>
             <input
               name="title"
@@ -121,7 +125,7 @@ export default function UpdateReport() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description
+              {t('reports.description')}
             </label>
             <textarea
               name="description"
@@ -144,14 +148,14 @@ export default function UpdateReport() {
               disabled={saving}
               className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded text-sm font-medium disabled:opacity-50 cursor-pointer sm:w-auto w-full"
             >
-              {saving ? 'Updating...' : 'Update Report'}
+              {saving ? t('reports.updating') : t('reports.updateTitle')}
             </button>
             <button
               type="button"
               onClick={() => navigate('/resident/my-reports')}
               className="bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded text-sm font-medium cursor-pointer sm:w-auto w-full"
             >
-              Cancel
+              {t('reports.cancel')}
             </button>
           </div>
         </form>

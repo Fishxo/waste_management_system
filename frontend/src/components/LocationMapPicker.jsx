@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   MapContainer,
   TileLayer,
@@ -12,6 +13,7 @@ import L from 'leaflet'
 const DEFAULT_CENTER = [10.3345, 37.731]
 const DEFAULT_ZOOM = 13
 const SELECTED_ZOOM = 15
+const MAX_ACCEPTABLE_LOCATION_ACCURACY = 5000
 
 const markerIcon = new L.Icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -48,17 +50,21 @@ export default function LocationMapPicker({
   latitude,
   longitude,
   onLocationChange,
+  projectLocations = [],
 }) {
+  const { t } = useTranslation()
   const [viewLat, setViewLat] = useState(DEFAULT_CENTER[0])
   const [viewLng, setViewLng] = useState(DEFAULT_CENTER[1])
   const [viewZoom, setViewZoom] = useState(DEFAULT_ZOOM)
   const [mapRevision, setMapRevision] = useState(0)
   const [geoError, setGeoError] = useState('')
-  const [locating, setLocating] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [searching, setSearching] = useState(false)
   const [searchError, setSearchError] = useState('')
+  const [searchResults, setSearchResults] = useState([])
   const [selectedLabel, setSelectedLabel] = useState('')
+  const [locationAccuracy, setLocationAccuracy] = useState(null)
+  const [fromGeolocation, setFromGeolocation] = useState(false)
 
   const hasPosition =
     latitude !== '' &&
@@ -82,47 +88,18 @@ export default function LocationMapPicker({
     }
   }
 
-  const handleLocationSelect = (lat, lng, label = '') => {
+  const handleLocationSelect = (lat, lng, label = '', viaGeolocation = false) => {
     onLocationChange(lat, lng)
+    setFromGeolocation(viaGeolocation)
     moveMapTo(lat, lng, SELECTED_ZOOM, label)
   }
 
-  useEffect(() => {
-    if (!navigator.geolocation) {
-      setGeoError(
-        'Geolocation is not supported. Search for a place or click the map.'
-      )
-      setLocating(false)
-      return
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = pos.coords.latitude
-        const lng = pos.coords.longitude
-        moveMapTo(lat, lng, SELECTED_ZOOM, 'Your current location')
-        if (!hasPosition) {
-          onLocationChange(lat, lng)
-        }
-        setLocating(false)
-      },
-      () => {
-        setGeoError(
-          'Could not get your GPS location. Search below or click the map to set a pickup point.'
-        )
-        setLocating(false)
-      },
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
-    )
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
   const handleUseMyLocation = () => {
     if (!navigator.geolocation) {
-      setGeoError('Geolocation is not supported by your browser')
+      setGeoError(t('map.noGeoSupport'))
       return
     }
 
-    setLocating(true)
     setGeoError('')
     setSearchError('')
 
@@ -130,16 +107,22 @@ export default function LocationMapPicker({
       (pos) => {
         const lat = pos.coords.latitude
         const lng = pos.coords.longitude
-        handleLocationSelect(lat, lng, 'Your current location')
-        setLocating(false)
+        const accuracy = pos.coords.accuracy
+
+        if (accuracy > MAX_ACCEPTABLE_LOCATION_ACCURACY) {
+          setGeoError(
+            t('map.lowConfidence', { accuracy: Math.round(accuracy) })
+          )
+          return
+        }
+
+        setLocationAccuracy(accuracy)
+        handleLocationSelect(lat, lng, t('map.yourCurrentLocation'), true)
       },
       () => {
-        setGeoError(
-          'Could not get your current location. Try search or click the map.'
-        )
-        setLocating(false)
+        setGeoError(t('map.geoFailed'))
       },
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
     )
   }
 
@@ -149,6 +132,7 @@ export default function LocationMapPicker({
 
     setSearching(true)
     setSearchError('')
+    setSearchResults([])
 
     try {
       const params = new URLSearchParams({
@@ -164,25 +148,27 @@ export default function LocationMapPicker({
       )
 
       if (!response.ok) {
-        throw new Error('Search failed')
+        throw new Error(t('map.searchFailed'))
       }
 
       const results = await response.json()
 
       if (!results.length) {
-        setSearchError('No places found. Try a different search or click the map.')
+        setSearchError(t('map.noPlaces'))
         return
       }
 
-      const best = results[0]
-      const lat = Number(best.lat)
-      const lng = Number(best.lon)
-      handleLocationSelect(lat, lng, best.display_name)
+      setSearchResults(results)
     } catch {
-      setSearchError('Place search failed. Check your internet or click the map.')
+      setSearchError(t('map.placeSearchFailed'))
     } finally {
       setSearching(false)
     }
+  }
+
+  const selectSearchResult = (result) => {
+    handleLocationSelect(Number(result.lat), Number(result.lon), result.display_name)
+    setSearchResults([])
   }
 
   const handleSearchKeyDown = (e) => {
@@ -201,7 +187,7 @@ export default function LocationMapPicker({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={handleSearchKeyDown}
-          placeholder="Search place (e.g. Debre Markos, hotel name...)"
+          placeholder={t('map.searchPlaceholder')}
           className="flex-1 min-w-[200px] border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
         />
         <button
@@ -210,20 +196,34 @@ export default function LocationMapPicker({
           disabled={searching || !searchQuery.trim()}
           className="text-sm bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg font-medium cursor-pointer disabled:opacity-50"
         >
-          {searching ? 'Searching...' : 'Search'}
+          {searching ? t('map.searching') : t('map.search')}
         </button>
         <button
           type="button"
           onClick={handleUseMyLocation}
-          disabled={locating}
           className="text-sm bg-amber-100 hover:bg-amber-200 text-amber-900 px-4 py-2 rounded-lg font-medium cursor-pointer disabled:opacity-50"
         >
-          {locating ? 'Locating...' : 'Use my location'}
+          {t('map.useMyLocation')}
         </button>
       </div>
 
+      {searchResults.length > 0 && (
+        <div className="mb-3 border border-gray-200 rounded-lg bg-white divide-y divide-gray-100">
+          {searchResults.map((result) => (
+            <button
+              key={result.place_id}
+              type="button"
+              onClick={() => selectSearchResult(result)}
+              className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-amber-50 cursor-pointer"
+            >
+              {result.display_name}
+            </button>
+          ))}
+        </div>
+      )}
+
       <p className="text-sm text-gray-600 mb-2">
-        Click the map to set the pickup point. Scroll to zoom, drag to move around.
+        {t('map.clickToSet')}
       </p>
 
       {geoError && (
@@ -257,8 +257,8 @@ export default function LocationMapPicker({
           />
           <MapClickHandler
             onSelect={(lat, lng) => {
-              setSelectedLabel('Map selection')
-              handleLocationSelect(lat, lng, 'Map selection')
+              setSelectedLabel(t('map.mapSelection'))
+              handleLocationSelect(lat, lng, t('map.mapSelection'))
             }}
           />
           {position && (
@@ -268,6 +268,37 @@ export default function LocationMapPicker({
               icon={markerIcon}
             />
           )}
+          {projectLocations.map((location) => {
+            const locationPosition = [
+              Number(location.latitude),
+              Number(location.longitude),
+            ]
+            if (locationPosition.some((value) => Number.isNaN(value))) return null
+
+            return (
+              <Marker
+                key={location.id || `${location.latitude}-${location.longitude}`}
+                position={locationPosition}
+                icon={markerIcon}
+                eventHandlers={{
+                  click: () =>
+                    handleLocationSelect(
+                      locationPosition[0],
+                      locationPosition[1],
+                      location.name || t('map.projectLocation')
+                    ),
+                }}
+              >
+                {location.name || location.description ? (
+                  <L.Popup>
+                    {location.name && <strong>{location.name}</strong>}
+                    {location.name && location.description && <br />}
+                    {location.description}
+                  </L.Popup>
+                ) : null}
+              </Marker>
+            )
+          })}
         </MapContainer>
       </div>
 
@@ -277,8 +308,18 @@ export default function LocationMapPicker({
             <p className="text-gray-700 font-medium">{selectedLabel}</p>
           )}
           <p>
-            Selected: {Number(latitude).toFixed(6)}, {Number(longitude).toFixed(6)}
+            {t('map.selected', {
+              lat: Number(latitude).toFixed(6),
+              lng: Number(longitude).toFixed(6),
+            })}
           </p>
+          {fromGeolocation && locationAccuracy != null && (
+            <p className="text-gray-500">
+              {t('map.locationAccuracy', {
+                accuracy: Math.round(locationAccuracy),
+              })}
+            </p>
+          )}
         </div>
       )}
     </div>

@@ -1,4 +1,5 @@
 const notificationRepository = require("./notification.repository");
+const crypto = require("crypto");
 
 const VALID_ROLES = ["resident", "business_owner", "collector"];
 
@@ -18,6 +19,8 @@ exports.notifyOne = notifyOne;
 exports.notifyMany = async (recipients, payload) => {
     if (!recipients.length) return [];
 
+    const broadcastId = payload.broadcastId || crypto.randomUUID();
+
     const notifications = recipients.map((recipientId) => ({
         recipientRole: payload.recipientRole,
         recipientId,
@@ -25,6 +28,7 @@ exports.notifyMany = async (recipients, payload) => {
         message: payload.message,
         type: payload.type,
         createdBy: payload.createdBy || null,
+        broadcastId,
     }));
 
     return await notificationRepository.createBulkNotifications(notifications);
@@ -93,6 +97,24 @@ exports.markAllAsRead = async (recipientRole, recipientId) => {
     return await notificationRepository.markAllAsRead(recipientRole, recipientId);
 };
 
+exports.deleteNotification = async (notificationId, recipientRole, recipientId) => {
+    const notification = await notificationRepository.deleteNotification(
+        notificationId,
+        recipientRole,
+        recipientId
+    );
+
+    if (!notification) {
+        throw new Error("Notification not found");
+    }
+
+    return notification;
+};
+
+exports.deleteAllNotifications = async (recipientRole, recipientId) => {
+    return await notificationRepository.deleteAllNotifications(recipientRole, recipientId);
+};
+
 exports.sendManualNotification = async (adminId, adminKifle, data) => {
     const { recipientRole, recipientId, title, message } = data;
 
@@ -130,7 +152,10 @@ exports.sendManualNotification = async (adminId, adminKifle, data) => {
         throw new Error("No recipients found for this notification");
     }
 
-    return await exports.notifyMany(ids, payload);
+    return await exports.notifyMany(ids, {
+        ...payload,
+        broadcastId: crypto.randomUUID(),
+    });
 };
 
 exports.getNotificationsForAdmin = async (filters) => {

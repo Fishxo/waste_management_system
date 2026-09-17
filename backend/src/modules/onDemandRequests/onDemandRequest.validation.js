@@ -38,6 +38,42 @@ exports.createRequest = (req, res, next) => {
     next();
 };
 
+exports.updateRequest = (req, res, next) => {
+    const { latitude, longitude, description } = req.body;
+
+    if (latitude !== undefined || longitude !== undefined) {
+        if (latitude === undefined || longitude === undefined) {
+            return res.status(400).json({
+                message: "Latitude and longitude must be provided together",
+            });
+        }
+
+        if (!isValidCoordinate(latitude, longitude)) {
+            return res.status(400).json({
+                message: "Invalid latitude or longitude",
+            });
+        }
+    }
+
+    if (description !== undefined && String(description).length > 1000) {
+        return res.status(400).json({
+            message: "Description must be 1000 characters or less",
+        });
+    }
+
+    next();
+};
+
+exports.createIssue = (req, res, next) => {
+    if (!req.body.description || !String(req.body.description).trim()) {
+        return res.status(400).json({ message: "Issue description is required" });
+    }
+    if (String(req.body.description).trim().length > 1000) {
+        return res.status(400).json({ message: "Issue description must be 1000 characters or less" });
+    }
+    next();
+};
+
 exports.listRequests = (req, res, next) => {
     const { status } = req.query;
 

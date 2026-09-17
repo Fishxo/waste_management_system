@@ -38,11 +38,17 @@ exports.updateStatus = (req, res, next) => {
 };
 
 exports.listIssues = (req, res, next) => {
-    const { status } = req.query;
+    const { status, type } = req.query;
 
     if (status && !ALLOWED_ISSUE_STATUSES.includes(status)) {
         return res.status(400).json({
             message: "Invalid status. Allowed values are: pending, reviewing, resolved",
+        });
+    }
+
+    if (type && !['resident', 'business'].includes(type)) {
+        return res.status(400).json({
+            message: "Invalid type. Allowed values are: resident, business",
         });
     }
 

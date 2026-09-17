@@ -10,6 +10,15 @@ const statusBadge = {
   rejected: 'bg-red-100 text-red-800',
 }
 
+const collectionBadge = {
+  assigned: 'bg-blue-100 text-blue-800',
+  pending: 'bg-gray-100 text-gray-800',
+  in_progress: 'bg-orange-100 text-orange-800',
+  completed: 'bg-green-100 text-green-800',
+  failed: 'bg-red-100 text-red-800',
+  confirmed: 'bg-emerald-100 text-emerald-800',
+}
+
 function formatStatus(status) {
   if (!status) return 'All'
   return status
@@ -40,6 +49,8 @@ export default function AdminOnDemandRequests() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [notesById, setNotesById] = useState({})
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   const fetchRequests = (status = '') => {
     setLoading(true)
@@ -108,6 +119,22 @@ export default function AdminOnDemandRequests() {
       setError(err.response?.data?.message || 'Failed to assign collector')
     } finally {
       setUpdating(null)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    setDeleting(true)
+    setError('')
+    try {
+      await api.delete(`/muAdmin/on-demand-requests/${deleteTarget.id}`)
+      setDeleteTarget(null)
+      setMessage('On-demand request deleted successfully')
+      fetchRequests(filter)
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to delete request')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -225,9 +252,36 @@ export default function AdminOnDemandRequests() {
                   </td>
                   <td className="px-4 py-3">
                     {request.status === 'approved' ? (
-                      <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                        {formatStatus(request.collection_status || 'unassigned')}
-                      </span>
+                      <div className="space-y-1 min-w-[150px]">
+                        <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${collectionBadge[request.collection_status] || 'bg-gray-100 text-gray-800'}`}>
+                          {formatStatus(request.collection_status || 'unassigned')}
+                        </span>
+                        {request.collector_name && (
+                          <p className="text-xs text-gray-600">
+                            Collector: {request.collector_name}
+                          </p>
+                        )}
+                        {request.collection_status === 'completed' && request.completed_at && (
+                          <p className="text-xs text-green-700">
+                            Completed: {formatDate(request.completed_at)}
+                          </p>
+                        )}
+                        {request.collector_notes && (
+                          <p className="text-xs text-gray-600 whitespace-pre-wrap">
+                            Note: {request.collector_notes}
+                          </p>
+                        )}
+                        {request.issue_description && request.collection_status !== 'confirmed' && (
+                          <p className="text-xs text-red-700 bg-red-50 rounded px-2 py-1 whitespace-pre-wrap">
+                            Issue: {request.issue_description}
+                          </p>
+                        )}
+                        {request.collection_status === 'confirmed' && (
+                          <p className="text-xs text-emerald-700 font-medium">
+                            Confirmed by business
+                          </p>
+                        )}
+                      </div>
                     ) : (
                       <span className="text-xs text-gray-400">—</span>
                     )}
@@ -238,6 +292,25 @@ export default function AdminOnDemandRequests() {
                   <td className="px-4 py-3 min-w-[200px]">
                     {request.status === 'pending' ? (
                       <div className="space-y-2">
+                        <select
+                          value={request.collector_id || ''}
+                          onChange={(e) =>
+                            handleAssignCollector(request.id, e.target.value)
+                          }
+                          disabled={updating === request.id}
+                          className="border border-gray-300 rounded px-2 py-1 text-xs w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                        >
+                          <option value="">
+                            {request.collector_name
+                              ? 'Reassign collector...'
+                              : 'Assign collector before approval...'}
+                          </option>
+                          {collectors.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.full_name}
+                            </option>
+                          ))}
+                        </select>
                         <textarea
                           rows={2}
                           placeholder="Optional note to business owner"
@@ -254,7 +327,7 @@ export default function AdminOnDemandRequests() {
                           <button
                             type="button"
                             onClick={() => handleReview(request.id, 'approved')}
-                            disabled={updating === request.id}
+                            disabled={updating === request.id || !request.collector_id}
                             className="flex-1 bg-green-600 hover:bg-green-700 text-white px-2 py-1.5 rounded text-xs font-medium cursor-pointer disabled:opacity-50"
                           >
                             Approve
@@ -268,30 +341,34 @@ export default function AdminOnDemandRequests() {
                             Reject
                           </button>
                         </div>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteTarget(request)}
+                          className="text-xs text-red-600 hover:underline cursor-pointer"
+                        >
+                          Delete request
+                        </button>
                       </div>
                     ) : request.status === 'approved' ? (
                       <div className="space-y-2">
                         {request.collector_name && (
                           <span className="text-sm text-gray-700 block">
-                            {request.collector_name}
+                            Assigned: {request.collector_name}
                           </span>
                         )}
-                        {!['completed', 'confirmed'].includes(
-                          request.collection_status
-                        ) && (
+                        <span className="text-xs text-gray-500">
+                          Monitor progress in the Collection column.
+                        </span>
+                        {request.issue_description && request.collection_status !== 'confirmed' && (
                           <select
-                            defaultValue=""
+                            value=""
                             onChange={(e) =>
                               handleAssignCollector(request.id, e.target.value)
                             }
                             disabled={updating === request.id}
-                            className="border border-gray-300 rounded px-2 py-1 text-xs w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                            className="border border-red-300 rounded px-2 py-1 text-xs w-full focus:outline-none focus:ring-2 focus:ring-red-400"
                           >
-                            <option value="">
-                              {request.collector_name
-                                ? 'Reassign collector...'
-                                : 'Assign collector...'}
-                            </option>
+                            <option value="">Reassign collector for issue...</option>
                             {collectors.map((c) => (
                               <option key={c.id} value={c.id}>
                                 {c.full_name}
@@ -299,22 +376,61 @@ export default function AdminOnDemandRequests() {
                             ))}
                           </select>
                         )}
-                        {request.collection_status === 'confirmed' && (
-                          <span className="text-xs text-emerald-600 font-medium">
-                            Confirmed by business
-                          </span>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => setDeleteTarget(request)}
+                          className="text-xs text-red-600 hover:underline cursor-pointer"
+                        >
+                          Delete request
+                        </button>
                       </div>
                     ) : (
-                      <span className="text-xs text-gray-400">
-                        Reviewed {formatDate(request.reviewed_at)}
-                      </span>
+                      <div className="space-y-2">
+                        <span className="text-xs text-gray-400 block">
+                          Reviewed {formatDate(request.reviewed_at)}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteTarget(request)}
+                          className="text-xs text-red-600 hover:underline cursor-pointer"
+                        >
+                          Delete request
+                        </button>
+                      </div>
                     )}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold text-gray-900">Delete request?</h3>
+            <p className="text-sm text-gray-600 mt-2">
+              This request and its collection history will be permanently removed. This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 text-sm cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm disabled:opacity-50 cursor-pointer"
+              >
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import api from '../../api/axios'
 import Loading from '../../components/Loading'
 import RaiseScheduleIssueModal from './RaiseScheduleIssueModal'
@@ -30,12 +31,30 @@ function formatTimeRange(start, end) {
   return end ? `${formatTime(start)} — ${formatTime(end)}` : formatTime(start)
 }
 
+function formatMonth(value) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'Other'
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Africa/Addis_Ababa',
+    month: 'long',
+  }).format(date)
+}
+
 export default function ResidentSchedules() {
+  const { t } = useTranslation()
   const [schedules, setSchedules] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selectedSchedule, setSelectedSchedule] = useState(null)
   const [successMessage, setSuccessMessage] = useState('')
+
+  const scheduleGroups = schedules.reduce((groups, schedule) => {
+    const month = formatMonth(schedule.collection_date)
+    const group = groups.find((item) => item.month === month)
+    if (group) group.schedules.push(schedule)
+    else groups.push({ month, schedules: [schedule] })
+    return groups
+  }, [])
 
   useEffect(() => {
     api
@@ -44,7 +63,7 @@ export default function ResidentSchedules() {
         setSchedules(Array.isArray(data) ? data : data.data || [])
       })
       .catch((err) =>
-        setError(err.response?.data?.message || 'Failed to load schedules')
+        setError(err.response?.data?.message || t('schedules.failedToLoad'))
       )
       .finally(() => setLoading(false))
   }, [])
@@ -57,11 +76,8 @@ export default function ResidentSchedules() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-2">Collection Schedules</h2>
-      <p className="text-gray-500 mb-6">
-        Waste collection days for your area. Raise an issue if a schedule was
-        missed or needs attention.
-      </p>
+      <h2 className="text-2xl font-bold mb-2">{t('schedules.title')}</h2>
+      <p className="text-gray-500 mb-6">{t('schedules.intro')}</p>
 
       {successMessage && (
         <div className="mb-4 px-4 py-3 rounded-lg text-sm bg-green-50 text-green-700 border border-green-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -70,7 +86,7 @@ export default function ResidentSchedules() {
             to="/resident/my-schedule-issues"
             className="text-green-800 font-medium hover:underline"
           >
-            View schedule issues
+            {t('schedules.viewScheduleIssues')}
           </Link>
         </div>
       )}
@@ -87,15 +103,21 @@ export default function ResidentSchedules() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
           <div className="text-4xl mb-3">🗓️</div>
           <p className="text-gray-600">
-            No collection schedules available for your area yet.
+            {t('schedules.noSchedules')}
           </p>
           <p className="text-sm text-gray-400 mt-1">
-            Check back later for updates from your municipality.
+            {t('schedules.noSchedulesSub')}
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {schedules.map((schedule) => (
+        <div className="space-y-8">
+          {scheduleGroups.map((group) => (
+            <section key={group.month}>
+              <h3 className="text-lg font-semibold text-gray-700 mb-3">
+                {group.month}
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {group.schedules.map((schedule) => (
             <div
               key={schedule.id}
               className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 flex flex-col"
@@ -113,15 +135,15 @@ export default function ResidentSchedules() {
               </div>
               <div className="space-y-1 text-sm text-gray-600 flex-1">
                 <p>
-                  <span className="text-gray-400">Sub-city:</span>{' '}
+                  <span className="text-gray-400">{t('schedules.subCity')}</span>{' '}
                   {schedule.kifle_ketema}
                 </p>
                 <p>
-                  <span className="text-gray-400">Kebele:</span>{' '}
+                  <span className="text-gray-400">{t('schedules.kebele')}</span>{' '}
                   {schedule.kebele || '—'}
                 </p>
                 <p>
-                  <span className="text-gray-400">Sefer:</span>{' '}
+                  <span className="text-gray-400">{t('schedules.sefer')}</span>{' '}
                   {schedule.sefer || '—'}
                 </p>
               </div>
@@ -135,9 +157,12 @@ export default function ResidentSchedules() {
                 onClick={() => setSelectedSchedule(schedule)}
                 className="mt-4 w-full bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-50 py-2 px-4 rounded-lg text-sm font-medium cursor-pointer transition"
               >
-                Raise Issue
+                {t('schedules.raiseIssue')}
               </button>
             </div>
+          ))}
+              </div>
+            </section>
           ))}
         </div>
       )}
@@ -146,9 +171,7 @@ export default function ResidentSchedules() {
         schedule={selectedSchedule}
         onClose={() => setSelectedSchedule(null)}
         onSuccess={() =>
-          setSuccessMessage(
-            'Issue submitted successfully. The municipal admin will review it.'
-          )
+          setSuccessMessage(t('issues.issueSuccess'))
         }
       />
     </div>

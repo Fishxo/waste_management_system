@@ -203,6 +203,16 @@ router.patch(
     onDemandRequestController.updateRequestStatus
 );
 
+router.delete(
+    "/on-demand-requests/:id",
+    authenticateMuAdmin,
+    logActivity({
+        action: "delete_on_demand_request",
+        entityType: "on_demand_request",
+    }),
+    onDemandRequestController.deleteRequest
+);
+
 router.post(
     "/collectors",
     authenticateMuAdmin,

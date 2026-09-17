@@ -17,6 +17,7 @@ exports.updateBusinessOwnerProfile = (req, res, next) => {
         businessType,
         kebele,
         kifleKetema,
+        sefer,
     } = req.body;
 
     if (
@@ -26,7 +27,8 @@ exports.updateBusinessOwnerProfile = (req, res, next) => {
         !address ||
         !businessType ||
         !kebele ||
-        !kifleKetema
+        !kifleKetema ||
+        !sefer
     ) {
         return res.status(400).json({
             message: "All fields are required",

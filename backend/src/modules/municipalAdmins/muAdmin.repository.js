@@ -119,7 +119,7 @@ exports.updateReportStatus = async (reportId, status) => {
     return report;
 };
 
-exports.getAllReports = async (status, kifleKetema) => {
+exports.getAllReports = async (status, kifleKetema, reporterRole) => {
     let query = `
         SELECT
             r.id,
@@ -137,12 +137,20 @@ exports.getAllReports = async (status, kifleKetema) => {
             col.id AS collector_id,
             col.full_name AS collector_name,
             col.phone_number AS collector_phone,
-            col.kifle_ketema AS collector_kifle_ketema
+            col.kifle_ketema AS collector_kifle_ketema,
+            biz.business_id,
+            biz.business_code,
+            biz.business_name,
+            biz.owner_name AS business_owner_name,
+            biz.email AS business_email,
+            biz.kifle_ketema AS business_kifle_ketema
         FROM reports r
         LEFT JOIN residents res
             ON r.resident_id = res.id
         LEFT JOIN collectors col
             ON r.collector_id = col.id
+        LEFT JOIN business_owners biz
+            ON r.business_id = biz.business_id
     `;
 
     const values = [];
@@ -150,7 +158,7 @@ exports.getAllReports = async (status, kifleKetema) => {
 
     if (kifleKetema) {
         conditions.push(
-            `LOWER(COALESCE(res.kifle_ketema, col.kifle_ketema)) = LOWER($${values.length + 1})`
+            `LOWER(COALESCE(res.kifle_ketema, col.kifle_ketema, biz.kifle_ketema)) = LOWER($${values.length + 1})`
         );
         values.push(kifleKetema);
     }
@@ -158,6 +166,11 @@ exports.getAllReports = async (status, kifleKetema) => {
     if (status) {
         conditions.push(`r.status = $${values.length + 1}`);
         values.push(status);
+    }
+
+    if (["resident", "business_owner", "collector"].includes(reporterRole)) {
+        conditions.push(`r.reporter_role = $${values.length + 1}`);
+        values.push(reporterRole);
     }
 
     if (conditions.length) {

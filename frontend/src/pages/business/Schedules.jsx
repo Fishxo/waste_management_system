@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
 import api from '../../api/axios'
 import Loading from '../../components/Loading'
+import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import RaiseScheduleIssueModal from '../resident/RaiseScheduleIssueModal'
 
 function formatDate(value) {
   if (!value) return '—'
@@ -28,10 +31,30 @@ function formatTimeRange(start, end) {
   return end ? `${formatTime(start)} — ${formatTime(end)}` : formatTime(start)
 }
 
+function formatMonth(value) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'Other'
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Africa/Addis_Ababa',
+    month: 'long',
+  }).format(date)
+}
+
 export default function BusinessSchedules() {
+  const { t } = useTranslation('business')
   const [schedules, setSchedules] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [selectedSchedule, setSelectedSchedule] = useState(null)
+  const [successMessage, setSuccessMessage] = useState('')
+
+  const scheduleGroups = schedules.reduce((groups, schedule) => {
+    const month = formatMonth(schedule.collection_date)
+    const group = groups.find((item) => item.month === month)
+    if (group) group.schedules.push(schedule)
+    else groups.push({ month, schedules: [schedule] })
+    return groups
+  }, [])
 
   useEffect(() => {
     api
@@ -40,17 +63,29 @@ export default function BusinessSchedules() {
         setSchedules(Array.isArray(data) ? data : data.data || [])
       })
       .catch((err) =>
-        setError(err.response?.data?.message || 'Failed to load schedules')
+        setError(err.response?.data?.message || t('failedToLoadSchedules'))
       )
       .finally(() => setLoading(false))
-  }, [])
+  }, [t])
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-2">Collection Schedules</h2>
+      <h2 className="text-2xl font-bold mb-2">{t('collectionSchedules')}</h2>
       <p className="text-gray-500 mb-6">
-        Waste collection days for your business area (sub-city and kebele).
+        {t('schedulesForBusiness')}
       </p>
+
+      <div className="mb-5">
+        <Link to="/business/schedule-issues" className="text-amber-700 hover:underline text-sm">
+          {t('viewRaisedIssues')}
+        </Link>
+      </div>
+
+      {successMessage && (
+        <p className="mb-4 px-4 py-3 rounded-lg text-sm bg-green-50 text-green-700 border border-green-200">
+          {successMessage}
+        </p>
+      )}
 
       {error && (
         <p className="mb-4 px-4 py-2.5 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200">
@@ -64,15 +99,21 @@ export default function BusinessSchedules() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
           <div className="text-4xl mb-3">🗓️</div>
           <p className="text-gray-600">
-            No collection schedules available for your area yet.
+            {t('noSchedules')}
           </p>
           <p className="text-sm text-gray-400 mt-1">
-            Check back later for updates from your municipality.
+            {t('noSchedulesSub')}
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {schedules.map((schedule) => (
+        <div className="space-y-8">
+          {scheduleGroups.map((group) => (
+            <section key={group.month}>
+              <h3 className="text-lg font-semibold text-gray-700 mb-3">
+                {group.month}
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {group.schedules.map((schedule) => (
             <div
               key={schedule.id}
               className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 flex flex-col"
@@ -90,15 +131,15 @@ export default function BusinessSchedules() {
               </div>
               <div className="space-y-1 text-sm text-gray-600 flex-1">
                 <p>
-                  <span className="text-gray-400">Sub-city:</span>{' '}
+                  <span className="text-gray-400">{t('subCity')}</span>{' '}
                   {schedule.kifle_ketema}
                 </p>
                 <p>
-                  <span className="text-gray-400">Kebele:</span>{' '}
+                  <span className="text-gray-400">{t('kebele')}</span>{' '}
                   {schedule.kebele || '—'}
                 </p>
                 <p>
-                  <span className="text-gray-400">Sefer:</span>{' '}
+                  <span className="text-gray-400">{t('sefer')}</span>{' '}
                   {schedule.sefer || '—'}
                 </p>
               </div>
@@ -107,10 +148,26 @@ export default function BusinessSchedules() {
                   {schedule.notes}
                 </p>
               )}
+              <button
+                type="button"
+                onClick={() => setSelectedSchedule(schedule)}
+                className="mt-4 w-full bg-white border border-amber-200 text-amber-700 hover:bg-amber-50 py-2 px-4 rounded-lg text-sm font-medium cursor-pointer transition"
+              >
+                {t('raiseIssue')}
+              </button>
             </div>
+          ))}
+              </div>
+            </section>
           ))}
         </div>
       )}
+
+      <RaiseScheduleIssueModal
+        schedule={selectedSchedule}
+        onClose={() => setSelectedSchedule(null)}
+        onSuccess={() => setSuccessMessage(t('scheduleIssueSubmitted'))}
+      />
     </div>
   )
 }

@@ -1,5 +1,6 @@
 const businessOwnerService = require("./businessOwner.service");
 const scheduleService = require("../schedules/schedule.service");
+const scheduleIssueService = require("../scheduleIssues/scheduleIssue.service");
 
 function ensureBusinessOwner(req, res) {
     if (req.user.role !== "business_owner") {
@@ -130,5 +131,20 @@ exports.getBusinessOwnerSchedules = async (req, res) => {
         res.status(500).json({
             message: "Server error",
         });
+    }
+};
+
+exports.getBusinessOwnerScheduleIssues = async (req, res) => {
+    try {
+        if (!ensureBusinessOwner(req, res)) return;
+
+        const issues = await scheduleIssueService.getIssuesByBusinessOwner(req.user.id);
+        res.status(200).json({
+            message: "Schedule issues retrieved successfully",
+            data: issues,
+        });
+    } catch (err) {
+        console.log("GET BUSINESS OWNER SCHEDULE ISSUES ERROR:", err);
+        res.status(500).json({ message: "Server error" });
     }
 };

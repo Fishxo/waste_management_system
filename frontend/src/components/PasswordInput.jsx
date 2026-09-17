@@ -1,14 +1,16 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 export default function PasswordInput({ value, onChange, className = '' }) {
   const [show, setShow] = useState(false)
+  const { t } = useTranslation()
 
   return (
     <div className="relative">
       <input
         name="password"
         type={show ? 'text' : 'password'}
-        placeholder="Password"
+        placeholder={t('auth.password')}
         value={value}
         onChange={onChange}
         required

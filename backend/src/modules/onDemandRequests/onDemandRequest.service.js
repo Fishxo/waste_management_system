@@ -63,6 +63,10 @@ exports.updateRequestStatus = async (
         throw new Error("Only pending requests can be reviewed");
     }
 
+    if (status === "approved" && !request.collector_id) {
+        throw new Error("Assign a collector before approving the request");
+    }
+
     const updated = await onDemandRequestRepository.updateRequestStatus(
         requestId,
         status,
@@ -86,6 +90,76 @@ exports.updateRequestStatus = async (
     }
 
     return updated;
+};
+
+exports.deleteRequest = async (requestId) => {
+    const request = await onDemandRequestRepository.findById(requestId);
+
+    if (!request) {
+        throw new Error("Request not found");
+    }
+
+    return await onDemandRequestRepository.deleteRequest(requestId);
+};
+
+exports.updateRequestByOwner = async (requestId, businessId, data) => {
+    const request = await onDemandRequestRepository.getRequestById(
+        requestId,
+        businessId
+    );
+
+    if (!request) {
+        throw new Error("Request not found");
+    }
+
+    if (request.status !== "pending") {
+        throw new Error("Only pending requests can be updated");
+    }
+
+    const updated = await onDemandRequestRepository.updateRequest(
+        requestId,
+        businessId,
+        data
+    );
+
+    if (!updated) {
+        throw new Error("Only pending requests can be updated");
+    }
+
+    return updated;
+};
+
+exports.deleteRequestByOwner = async (requestId, businessId) => {
+    const request = await onDemandRequestRepository.getRequestById(
+        requestId,
+        businessId
+    );
+
+    if (!request) {
+        throw new Error("Request not found");
+    }
+
+    const deleted = await onDemandRequestRepository.deleteRequestByOwner(
+        requestId,
+        businessId
+    );
+
+    if (!deleted) {
+        throw new Error("Request cannot be deleted at its current status");
+    }
+
+    return deleted;
+};
+
+exports.raiseIssue = async (requestId, businessId, description) => {
+    const request = await onDemandRequestRepository.getRequestById(requestId, businessId);
+
+    if (!request) throw new Error("Request not found");
+    if (request.status !== "approved" || request.collection_status !== "completed") {
+        throw new Error("Issues can only be raised for completed collections");
+    }
+
+    return await onDemandRequestRepository.createIssue(requestId, businessId, description);
 };
 
 exports.confirmCollection = async (requestId, businessId) => {

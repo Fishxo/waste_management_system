@@ -30,7 +30,7 @@ function Stars({ rating }) {
   )
 }
 
-export default function AdminFeedback() {
+export default function AdminFeedback({ systemAdmin = false }) {
   const [feedback, setFeedback] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -38,7 +38,7 @@ export default function AdminFeedback() {
 
   useEffect(() => {
     api
-      .get('/muAdmin/feedback')
+      .get(systemAdmin ? '/systemAdmin/feedback' : '/muAdmin/feedback')
       .then(({ data }) => {
         setFeedback(Array.isArray(data) ? data : data.data || [])
       })
@@ -46,7 +46,7 @@ export default function AdminFeedback() {
         setError(err.response?.data?.message || 'Failed to load feedback')
       )
       .finally(() => setLoading(false))
-  }, [])
+  }, [systemAdmin])
 
   const filtered = filter
     ? feedback.filter((f) => f.submitter_role === filter)
@@ -61,9 +61,9 @@ export default function AdminFeedback() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-2">User Feedback</h2>
+      <h2 className="text-2xl font-bold mb-2">System Usability Feedback</h2>
       <p className="text-gray-500 mb-6">
-        Feedback submitted by residents and business owners. Average rating:{' '}
+        Comments from residents and business owners about how the system works. Average rating:{' '}
         <span className="font-semibold text-gray-800">{avgRating}</span> / 5
         ({feedback.length} total)
       </p>
@@ -102,7 +102,9 @@ export default function AdminFeedback() {
                 <th className="px-4 py-3 font-medium">From</th>
                 <th className="px-4 py-3 font-medium">Role</th>
                 <th className="px-4 py-3 font-medium">Rating</th>
+                <th className="px-4 py-3 font-medium">Area</th>
                 <th className="px-4 py-3 font-medium">Comment</th>
+                <th className="px-4 py-3 font-medium">Suggested improvement</th>
                 <th className="px-4 py-3 font-medium">Sub-city</th>
                 <th className="px-4 py-3 font-medium">Submitted</th>
               </tr>
@@ -131,8 +133,12 @@ export default function AdminFeedback() {
                       ({item.rating}/5)
                     </span>
                   </td>
+                  <td className="px-4 py-3 capitalize">{item.area || '—'}</td>
                   <td className="px-4 py-3 max-w-xs whitespace-pre-wrap">
                     {item.comment || '—'}
+                  </td>
+                  <td className="px-4 py-3 max-w-xs whitespace-pre-wrap">
+                    {item.improvement || '—'}
                   </td>
                   <td className="px-4 py-3">{item.kifle_ketema || '—'}</td>
                   <td className="px-4 py-3 text-gray-500 whitespace-nowrap">

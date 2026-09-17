@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import api from '../../api/axios'
 import Loading from '../../components/Loading'
 
@@ -7,12 +8,6 @@ const statusBadge = {
   pending: 'bg-yellow-100 text-yellow-800',
   reviewing: 'bg-orange-100 text-orange-800',
   resolved: 'bg-green-100 text-green-800',
-}
-
-const statusHelp = {
-  pending: 'Your issue has been submitted and is waiting for the municipal admin.',
-  reviewing: 'The municipal admin is reviewing or handling your issue.',
-  resolved: 'Your issue has been resolved by the municipal admin.',
 }
 
 function formatTime(value) {
@@ -41,12 +36,13 @@ function formatDate(value) {
   })
 }
 
-function formatStatus(status) {
-  if (!status) return 'Unknown'
-  return status.charAt(0).toUpperCase() + status.slice(1)
+function formatStatus(status, t) {
+  if (!status) return t('common.unknown')
+  return t(`common.${status}`)
 }
 
 export default function MyScheduleIssues() {
+  const { t } = useTranslation()
   const [issues, setIssues] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -58,7 +54,7 @@ export default function MyScheduleIssues() {
         setIssues(Array.isArray(data) ? data : data.data || [])
       })
       .catch((err) =>
-        setError(err.response?.data?.message || 'Failed to load schedule issues')
+        setError(err.response?.data?.message || t('issues.failedToLoad'))
       )
       .finally(() => setLoading(false))
   }, [])
@@ -67,12 +63,11 @@ export default function MyScheduleIssues() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-2">Schedule Issues</h2>
+      <h2 className="text-2xl font-bold mb-2">{t('issues.title')}</h2>
       <p className="text-gray-500 mb-6">
-        Issues you raised when a collection schedule was missed or incorrect.
-        General waste reports are listed separately on{' '}
+        {t('issues.introPrefix')}{' '}
         <Link to="/resident/my-reports" className="text-indigo-600 hover:underline">
-          My Reports
+          {t('reports.title')}
         </Link>
         .
       </p>
@@ -86,13 +81,13 @@ export default function MyScheduleIssues() {
       {issues.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
           <div className="text-4xl mb-3">⚠️</div>
-          <p className="text-gray-600">You have not raised any schedule issues yet.</p>
+          <p className="text-gray-600">{t('issues.noIssues')}</p>
           <p className="text-sm text-gray-400 mt-1">
-            Go to{' '}
+            {t('issues.goTo')}{' '}
             <Link to="/resident/schedules" className="text-indigo-600 hover:underline">
-              Schedules
+              {t('schedules.title')}
             </Link>{' '}
-            to raise an issue if collection did not happen as planned.
+            {t('issues.toRaiseIssue')}
           </p>
         </div>
       ) : (
@@ -105,18 +100,21 @@ export default function MyScheduleIssues() {
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                    Issue #{issue.id}
+                    {t('issues.issueNumber', { id: issue.id })}
                   </p>
                   <p className="text-lg font-bold text-gray-900 mt-1">
                     {issue.collection_date
                       ? new Date(issue.collection_date).toLocaleDateString()
                       : '—'}{' '}
-                    at{' '}
+                    {t('issues.at')}{' '}
                     {formatTimeRange(issue.collection_time, issue.end_time)}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
-                    {issue.kifle_ketema}, Kebele {issue.kebele || '—'},{' '}
-                    Sefer {issue.sefer || '—'}
+                    {t('issues.location', {
+                      kifleKetema: issue.kifle_ketema,
+                      kebele: issue.kebele || '—',
+                      sefer: issue.sefer || '—',
+                    })}
                   </p>
                 </div>
                 <span
@@ -124,23 +122,23 @@ export default function MyScheduleIssues() {
                     statusBadge[issue.status] || 'bg-gray-100 text-gray-800'
                   }`}
                 >
-                  {formatStatus(issue.status)}
+                  {formatStatus(issue.status, t)}
                 </span>
               </div>
 
               <div className="rounded-xl bg-gray-50 border border-gray-200 p-4 text-sm text-gray-700 mb-4">
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-                  Your issue
+                  {t('issues.yourIssue')}
                 </p>
                 <p className="whitespace-pre-wrap">{issue.description}</p>
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
                 <p className="text-gray-500">
-                  Submitted on {formatDate(issue.created_at)}
+                  {t('issues.submittedOn', { date: formatDate(issue.created_at) })}
                 </p>
                 <p className="text-gray-600">
-                  {statusHelp[issue.status] || 'Status updated by the municipal admin.'}
+                  {t(`issues.helper${issue.status ? issue.status.charAt(0).toUpperCase() + issue.status.slice(1) : 'Default'}`)}
                 </p>
               </div>
             </div>

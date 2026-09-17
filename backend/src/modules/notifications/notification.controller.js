@@ -82,6 +82,41 @@ exports.markAllAsRead = async (req, res) => {
     }
 };
 
+exports.deleteNotification = async (req, res) => {
+    try {
+        const { role, id } = getRecipient(req);
+
+        if (!['resident', 'business_owner', 'collector'].includes(role)) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
+        await notificationService.deleteNotification(req.params.id, role, id);
+
+        res.status(200).json({ message: 'Notification deleted successfully' });
+    } catch (err) {
+        if (err.message === 'Notification not found') {
+            return res.status(404).json({ message: err.message });
+        }
+
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+exports.deleteAllNotifications = async (req, res) => {
+    try {
+        const { role, id } = getRecipient(req);
+
+        if (!['resident', 'business_owner', 'collector'].includes(role)) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
+        await notificationService.deleteAllNotifications(role, id);
+        res.status(200).json({ message: 'All notifications deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
 exports.getSentNotifications = async (req, res) => {
     try {
         const { recipientRole, type, search, page = 1, limit = 20 } = req.query;

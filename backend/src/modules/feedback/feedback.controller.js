@@ -30,6 +30,7 @@ exports.createFeedback = async (req, res) => {
             return res.status(403).json({ message: err.message });
         }
 
+        console.error("Error creating feedback:", err);
         res.status(500).json({ message: "Server error" });
     }
 };
@@ -48,6 +49,7 @@ exports.getMyFeedback = async (req, res) => {
             data: feedback,
         });
     } catch (err) {
+        console.error("Error retrieving feedback:", err);
         res.status(500).json({ message: "Server error" });
     }
 };
@@ -62,6 +64,7 @@ exports.getAllFeedback = async (req, res) => {
             data: feedback,
         });
     } catch (err) {
+        console.error("Error retrieving all feedback:", err);
         res.status(500).json({ message: "Server error" });
     }
 };

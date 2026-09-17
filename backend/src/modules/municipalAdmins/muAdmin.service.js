@@ -67,8 +67,8 @@ exports.updateReportStatus = async (reportId, status, adminId) => {
     return report;
 };
 
-exports.getAllReports = async (status, kifleKetema) => {
-    return await adminRepository.getAllReports(status, kifleKetema);
+exports.getAllReports = async (status, kifleKetema, reporterRole) => {
+    return await adminRepository.getAllReports(status, kifleKetema, reporterRole);
 };
 
 exports.getDashboardStatistics = async (kifleKetema) => {

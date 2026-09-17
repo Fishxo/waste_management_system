@@ -1,9 +1,18 @@
 const pool = require("../../database/db");
 
-exports.createFeedback = async ({ submitterRole, submitterId, rating, comment }) => {
+exports.createFeedback = async ({
+    submitterRole,
+    submitterId,
+    rating,
+    area,
+    comment,
+    improvement,
+}) => {
     const query = `
-        INSERT INTO feedback (submitter_role, submitter_id, rating, comment)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO feedback (
+            submitter_role, submitter_id, rating, area, comment, improvement
+        )
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *
     `;
 
@@ -11,7 +20,9 @@ exports.createFeedback = async ({ submitterRole, submitterId, rating, comment })
         submitterRole,
         submitterId,
         rating,
+        area || null,
         comment || null,
+        improvement || null,
     ]);
 
     return result.rows[0];
@@ -19,7 +30,7 @@ exports.createFeedback = async ({ submitterRole, submitterId, rating, comment })
 
 exports.getFeedbackBySubmitter = async (submitterRole, submitterId) => {
     const query = `
-        SELECT id, submitter_role, submitter_id, rating, comment, created_at
+        SELECT id, submitter_role, submitter_id, rating, area, comment, improvement, created_at
         FROM feedback
         WHERE submitter_role = $1 AND submitter_id = $2
         ORDER BY created_at DESC
@@ -37,7 +48,9 @@ exports.getAllFeedback = async (kifleKetema) => {
             f.submitter_role,
             f.submitter_id,
             f.rating,
+            f.area,
             f.comment,
+            f.improvement,
             f.created_at,
             CASE
                 WHEN f.submitter_role = 'resident' THEN

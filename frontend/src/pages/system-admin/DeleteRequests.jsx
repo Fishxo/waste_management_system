@@ -7,6 +7,13 @@ const TYPE_LABELS = {
   all: 'Notifications + Reports',
 }
 
+const NOTIFICATION_TYPE_LABELS = {
+  schedule_update: 'Schedule Update',
+  request_approved: 'Request Approved',
+  collector_assigned: 'Collector Assigned',
+  collection_completed: 'Collection Completed',
+}
+
 const STATUS_BADGES = {
   pending: 'bg-amber-100 text-amber-800 border-amber-300',
   approved: 'bg-green-100 text-green-800 border-green-300',
@@ -92,6 +99,11 @@ export default function DeleteRequests() {
                     <span className="font-semibold text-gray-900 text-sm">
                       {TYPE_LABELS[req.request_type] || req.request_type}
                     </span>
+                    {req.notification_type && (
+                      <span className="text-xs text-indigo-700">
+                        ({NOTIFICATION_TYPE_LABELS[req.notification_type] || req.notification_type})
+                      </span>
+                    )}
                     <span
                       className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${STATUS_BADGES[req.status] || ''}`}
                     >

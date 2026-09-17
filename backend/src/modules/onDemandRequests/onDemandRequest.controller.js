@@ -74,6 +74,63 @@ exports.getRequestById = async (req, res) => {
     }
 };
 
+exports.updateRequestByOwner = async (req, res) => {
+    try {
+        if (!ensureBusinessOwner(req, res)) return;
+
+        const request = await onDemandRequestService.updateRequestByOwner(
+            req.params.id,
+            req.user.id,
+            req.body
+        );
+
+        res.status(200).json({
+            message: "Request updated successfully",
+            data: request,
+        });
+    } catch (err) {
+        if (err.message === "Request not found") {
+            return res.status(404).json({ message: err.message });
+        }
+
+        if (err.message === "Only pending requests can be updated") {
+            return res.status(400).json({ message: err.message });
+        }
+
+        console.log("UPDATE MY ON-DEMAND REQUEST ERROR:", err);
+
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+exports.deleteRequestByOwner = async (req, res) => {
+    try {
+        if (!ensureBusinessOwner(req, res)) return;
+
+        const request = await onDemandRequestService.deleteRequestByOwner(
+            req.params.id,
+            req.user.id
+        );
+
+        res.status(200).json({
+            message: "Request deleted successfully",
+            data: request,
+        });
+    } catch (err) {
+        if (err.message === "Request not found") {
+            return res.status(404).json({ message: err.message });
+        }
+
+        if (err.message === "Request cannot be deleted at its current status") {
+            return res.status(400).json({ message: err.message });
+        }
+
+        console.log("DELETE MY ON-DEMAND REQUEST ERROR:", err);
+
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
 exports.getAllRequests = async (req, res) => {
     try {
         const { status } = req.query;
@@ -119,7 +176,8 @@ exports.updateRequestStatus = async (req, res) => {
     } catch (err) {
         if (
             err.message === "Request not found" ||
-            err.message === "Only pending requests can be reviewed"
+            err.message === "Only pending requests can be reviewed" ||
+            err.message === "Assign a collector before approving the request"
         ) {
             return res.status(400).json({ message: err.message });
         }
@@ -130,6 +188,43 @@ exports.updateRequestStatus = async (req, res) => {
 
         console.log("UPDATE ON-DEMAND REQUEST STATUS ERROR:", err);
 
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+exports.deleteRequest = async (req, res) => {
+    try {
+        const request = await onDemandRequestService.deleteRequest(req.params.id);
+
+        res.status(200).json({
+            message: "On-demand request deleted successfully",
+            data: request,
+        });
+    } catch (err) {
+        if (
+            err.message === "Request not found"
+        ) {
+            return res.status(400).json({ message: err.message });
+        }
+
+        console.log("DELETE ON-DEMAND REQUEST ERROR:", err);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+exports.raiseIssue = async (req, res) => {
+    try {
+        if (!ensureBusinessOwner(req, res)) return;
+        const issue = await onDemandRequestService.raiseIssue(
+            req.params.id,
+            req.user.id,
+            String(req.body.description).trim()
+        );
+        res.status(201).json({ message: "Issue raised successfully", data: issue });
+    } catch (err) {
+        if (err.message === "Request not found" || err.message === "Issues can only be raised for completed collections") {
+            return res.status(400).json({ message: err.message });
+        }
         res.status(500).json({ message: "Server error" });
     }
 };

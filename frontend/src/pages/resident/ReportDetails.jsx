@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import api from '../../api/axios'
 import Loading from '../../components/Loading'
 
@@ -11,6 +12,7 @@ const statusColors = {
 
 export default function ReportDetails() {
   const { id } = useParams()
+  const { t } = useTranslation()
   const [report, setReport] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -22,7 +24,7 @@ export default function ReportDetails() {
   }, [id])
 
   if (loading) return <Loading />
-  if (!report) return <p className="text-gray-500">Report not found.</p>
+  if (!report) return <p className="text-gray-500">{t('reports.notFound')}</p>
 
   return (
     <div>
@@ -30,7 +32,7 @@ export default function ReportDetails() {
         to="/resident/my-reports"
         className="text-indigo-600 hover:underline text-sm mb-4 inline-block"
       >
-        &larr; Back to My Reports
+        {t('reports.backToMyReports')}
       </Link>
       <div className="bg-white rounded-lg shadow p-6 max-w-2xl">
         <h2 className="text-2xl font-bold mb-4">{report.title}</h2>
@@ -40,21 +42,23 @@ export default function ReportDetails() {
               statusColors[report.status] || 'bg-gray-100 text-gray-800'
             }`}
           >
-            {report.status?.replace('_', ' ') || 'N/A'}
+            {report.status ? t(`common.${report.status}`) : t('common.na')}
           </span>
         </div>
         <p className="text-gray-700 mb-4">{report.description}</p>
         <div className="text-sm text-gray-500">
           <p>
-            Created:{' '}
-            {report.created_at
-              ? new Date(report.created_at).toLocaleString()
-              : '—'}
+            {t('reports.created', {
+              date: report.created_at
+                ? new Date(report.created_at).toLocaleString()
+                : '—',
+            })}
           </p>
           {report.updatedAt && (
             <p>
-              Updated:{' '}
-              {new Date(report.updatedAt).toLocaleString()}
+              {t('reports.updated', {
+                date: new Date(report.updatedAt).toLocaleString(),
+              })}
             </p>
           )}
         </div>
@@ -63,7 +67,7 @@ export default function ReportDetails() {
             to={`/resident/my-reports/${report.id}/edit`}
             className="mt-6 inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-sm font-medium"
           >
-            Edit Report
+            {t('reports.editReport')}
           </Link>
         )}
       </div>

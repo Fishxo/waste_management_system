@@ -104,10 +104,14 @@ exports.updateScheduleStatus = async (req, res) => {
     } catch (err) {
         if (
             err.message.includes("not found") ||
-            err.message.includes("Cannot change")
+            err.message.includes("Cannot change") ||
+            err.message === "Invalid collection status" ||
+            err.message === "Failed to update request status"
         ) {
             return res.status(400).json({ message: err.message });
         }
+
+        console.error("UPDATE ON-DEMAND STATUS ERROR:", err);
 
         res.status(500).json({ message: "Server error" });
     }
@@ -282,8 +286,11 @@ exports.assignCollectorToRequest = async (req, res) => {
         if (err.message === "Collector not found") {
             return res.status(404).json({ message: err.message });
         }
-        if (err.message === "Approved request not found") {
+        if (err.message === "Pending or approved request not found") {
             return res.status(404).json({ message: err.message });
+        }
+        if (err.message === "Collector is already assigned to another active request") {
+            return res.status(409).json({ message: err.message });
         }
 
         res.status(500).json({ message: "Server error" });

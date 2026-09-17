@@ -6,12 +6,14 @@ const LEGACY_SCHEDULE_ISSUE_FILTER = `
 `;
 // maps a reporter role to the ownership column on the reports table
 function getOwnerColumn(role) {
-    return role === "collector" ? "collector_id" : "resident_id";
+    if (role === "collector") return "collector_id";
+    if (role === "business_owner") return "business_id";
+    return "resident_id";
 }
 
 //creating the users reports for database 
 exports.createReport = async ({ role, ownerId }, data) => {
-    const reporterRole = role === "collector" ? "collector" : "resident";
+    const reporterRole = role;
     const ownerColumn = getOwnerColumn(role);
     const query = `
         INSERT INTO reports
@@ -38,6 +40,7 @@ exports.getMyReports = async ({ role, ownerId }) => {
             id,
             resident_id,
             collector_id,
+            business_id,
             reporter_role,
             title,
             description,
@@ -62,6 +65,7 @@ exports.getReportById = async (reportId, { role, ownerId }) => {
             id,
             resident_id,
             collector_id,
+            business_id,
             reporter_role,
             title,
             description,

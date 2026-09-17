@@ -3,6 +3,12 @@ import api from '../../api/axios'
 import Loading from '../../components/Loading'
 
 const statusOptions = ['', 'pending', 'in_progress', 'resolved']
+const reporterOptions = [
+  { value: '', label: 'All Reporters' },
+  { value: 'business_owner', label: 'Business Owners' },
+  { value: 'resident', label: 'Residents' },
+  { value: 'collector', label: 'Collectors' },
+]
 
 const statusBadge = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -19,11 +25,18 @@ const roleBadge = {
     label: 'Resident',
     cls: 'bg-indigo-100 text-indigo-800',
   },
+  business_owner: {
+    label: 'Business Owner',
+    cls: 'bg-amber-100 text-amber-800',
+  },
 }
 
 function reporterLabel(report) {
   if (report.reporter_role === 'collector') {
     return report.collector_name || 'Collector'
+  }
+  if (report.reporter_role === 'business_owner') {
+    return report.business_owner_name || report.business_name || 'Business Owner'
   }
   const name = [report.first_name, report.last_name].filter(Boolean).join(' ')
   return name || report.resident_code || '—'
@@ -32,14 +45,17 @@ function reporterLabel(report) {
 export default function AdminReports() {
   const [reports, setReports] = useState([])
   const [filter, setFilter] = useState('')
+  const [reporterFilter, setReporterFilter] = useState('')
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(null)
 
-  const fetchReports = (status = '') => {
+  const fetchReports = (status = '', reporterRole = '') => {
     setLoading(true)
-    const url = status
-      ? `/muAdmin/reports?status=${status}`
-      : '/muAdmin/reports'
+    const params = new URLSearchParams()
+    if (status) params.set('status', status)
+    if (reporterRole) params.set('reporterRole', reporterRole)
+    const query = params.toString()
+    const url = query ? `/muAdmin/reports?${query}` : '/muAdmin/reports'
     api
       .get(url)
       .then(({ data }) => {
@@ -49,8 +65,8 @@ export default function AdminReports() {
   }
 
   useEffect(() => {
-    fetchReports(filter)
-  }, [filter])
+    fetchReports(filter, reporterFilter)
+  }, [filter, reporterFilter])
 
   const handleStatusChange = async (reportId, newStatus) => {
     setUpdating(reportId)
@@ -58,7 +74,7 @@ export default function AdminReports() {
       await api.patch(`/muAdmin/report/${reportId}/status`, {
         status: newStatus,
       })
-      fetchReports(filter)
+      fetchReports(filter, reporterFilter)
     } finally {
       setUpdating(null)
     }
@@ -82,6 +98,24 @@ export default function AdminReports() {
             {s ? s.replace('_', ' ') : 'All'}
           </button>
         ))}
+      </div>
+
+      <div className="mb-4">
+        <label htmlFor="reporter-filter" className="block text-sm font-medium text-gray-700 mb-1">
+          Filter by reporter
+        </label>
+        <select
+          id="reporter-filter"
+          value={reporterFilter}
+          onChange={(event) => setReporterFilter(event.target.value)}
+          className="border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
+        >
+          {reporterOptions.map((option) => (
+            <option key={option.value || 'all'} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       {loading ? (

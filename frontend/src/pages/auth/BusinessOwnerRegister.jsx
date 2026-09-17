@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import api from '../../api/axios'
 import PasswordInput from '../../components/PasswordInput'
 
@@ -38,6 +39,7 @@ export default function BusinessOwnerRegister() {
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const { t } = useTranslation()
   const navigate = useNavigate()
 
   const handleChange = (e) =>
@@ -70,7 +72,7 @@ export default function BusinessOwnerRegister() {
         err.response?.data?.message ||
         (typeof err.response?.data === 'string'
           ? err.response.data
-          : 'Registration failed')
+          : t('auth.registrationFailed'))
       setError(msg)
     } finally {
       setLoading(false)
@@ -81,7 +83,7 @@ export default function BusinessOwnerRegister() {
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4 py-8">
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
         <h2 className="text-2xl font-bold text-center mb-6">
-          Business Owner Registration
+          {t('auth.businessRegistration')}
         </h2>
         {error && (
           <p className="text-red-600 text-sm text-center mb-4">{error}</p>
@@ -89,7 +91,7 @@ export default function BusinessOwnerRegister() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <input
             name="businessName"
-            placeholder="Business Name"
+            placeholder={t('auth.businessName')}
             value={form.businessName}
             onChange={handleChange}
             required
@@ -97,7 +99,7 @@ export default function BusinessOwnerRegister() {
           />
           <input
             name="ownerName"
-            placeholder="Owner Name"
+            placeholder={t('auth.ownerName')}
             value={form.ownerName}
             onChange={handleChange}
             required
@@ -106,7 +108,7 @@ export default function BusinessOwnerRegister() {
           <input
             name="email"
             type="email"
-            placeholder="Email"
+            placeholder={t('auth.email')}
             value={form.email}
             onChange={handleChange}
             required
@@ -119,7 +121,7 @@ export default function BusinessOwnerRegister() {
           />
           <input
             name="phoneNumber"
-            placeholder="Phone Number"
+            placeholder={t('auth.phoneNumber')}
             value={form.phoneNumber}
             onChange={handleChange}
             required
@@ -132,16 +134,16 @@ export default function BusinessOwnerRegister() {
             required
             className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
           >
-            <option value="">Select Business Type</option>
+            <option value="">{t('auth.selectBusinessType')}</option>
             {BUSINESS_TYPES.map((type) => (
               <option key={type} value={type}>
-                {type}
+                {t(`auth.businessTypes.${type}`)}
               </option>
             ))}
           </select>
           <input
             name="address"
-            placeholder="Address"
+            placeholder={t('auth.address')}
             value={form.address}
             onChange={handleChange}
             required
@@ -154,7 +156,7 @@ export default function BusinessOwnerRegister() {
             required
             className={SELECT_CLASS}
           >
-            <option value="">Select Kifle Ketema</option>
+            <option value="">{t('auth.selectKifleKetema')}</option>
             {Object.keys(LOCATION_DATA).map((kk) => (
               <option key={kk} value={kk}>
                 {kk}
@@ -169,10 +171,10 @@ export default function BusinessOwnerRegister() {
             disabled={!form.kifleKetema}
             className={SELECT_CLASS}
           >
-            <option value="">Select Kebele</option>
+            <option value="">{t('auth.selectKebele')}</option>
             {kebeleOptions.map((k) => (
               <option key={k} value={k}>
-                Kebele {k}
+                {t('auth.kebele', { n: k })}
               </option>
             ))}
           </select>
@@ -184,10 +186,10 @@ export default function BusinessOwnerRegister() {
             disabled={!form.kebele}
             className={SELECT_CLASS}
           >
-            <option value="">Select Sefer</option>
+            <option value="">{t('auth.selectSefer')}</option>
             {SEFER_OPTIONS.map((s) => (
               <option key={s} value={s}>
-                Sefer {s}
+                {t('auth.sefer', { n: s })}
               </option>
             ))}
           </select>
@@ -196,13 +198,13 @@ export default function BusinessOwnerRegister() {
             disabled={loading}
             className="bg-amber-600 hover:bg-amber-700 text-white py-2 rounded text-sm font-medium disabled:opacity-50 cursor-pointer"
           >
-            {loading ? 'Registering...' : 'Register'}
+            {loading ? t('auth.registering') : t('auth.register')}
           </button>
         </form>
         <p className="text-sm text-center mt-4">
-          Already have an account?{' '}
+          {t('auth.alreadyHaveAccount')}{' '}
           <Link to="/business/login" className="text-amber-600 hover:underline">
-            Login
+            {t('auth.login')}
           </Link>
         </p>
       </div>

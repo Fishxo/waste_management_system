@@ -3,18 +3,20 @@ const { getAdminKifleKetema } = require("../../utils/adminScope");
 
 exports.createIssue = async (req, res) => {
     try {
-        if (req.user.role !== "resident") {
+        if (!['resident', 'business_owner'].includes(req.user.role)) {
             return res.status(403).json({
                 message: "Access denied",
             });
         }
 
-        const residentId = req.user.id;
+        const actorRole = req.user.role;
+        const actorId = req.user.id;
         const { scheduleId } = req.params;
         const { description } = req.body;
 
         const issue = await scheduleIssueService.createIssue(
-            residentId,
+            actorRole,
+            actorId,
             scheduleId,
             description
         );
@@ -24,7 +26,7 @@ exports.createIssue = async (req, res) => {
             data: issue,
         });
     } catch (err) {
-        if (err.message === "Resident not found") {
+        if (err.message === "Resident not found" || err.message === "Business owner not found") {
             return res.status(404).json({
                 message: err.message,
             });
@@ -40,6 +42,10 @@ exports.createIssue = async (req, res) => {
             return res.status(403).json({
                 message: err.message,
             });
+        }
+
+        if (err.message === "Your account has been deactivated") {
+            return res.status(403).json({ message: err.message });
         }
 
         if (err.message === "An active issue already exists for this schedule") {
@@ -58,10 +64,10 @@ exports.createIssue = async (req, res) => {
 
 exports.getAllIssues = async (req, res) => {
     try {
-        const { status } = req.query;
+        const { status, type } = req.query;
         const kifleKetema = getAdminKifleKetema(req);
 
-        const issues = await scheduleIssueService.getAllIssues(status, kifleKetema);
+        const issues = await scheduleIssueService.getAllIssues(status, kifleKetema, type);
 
         res.status(200).json({
             message: "Schedule issues retrieved successfully",

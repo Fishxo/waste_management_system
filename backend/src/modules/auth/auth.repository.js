@@ -64,8 +64,8 @@ exports.createBusinessOwner = async (owner) => {
 
   const query = `
     INSERT INTO business_owners
-    (business_id, business_name, owner_name, phone_number, email, password_hash, address, business_type, kebele, kifle_ketema, business_code)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+    (business_id, business_name, owner_name, phone_number, email, password_hash, address, business_type, kebele, kifle_ketema, sefer, business_code)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
     RETURNING *
   `;
 
@@ -80,6 +80,7 @@ exports.createBusinessOwner = async (owner) => {
     owner.businessType,
     owner.kebele,
     owner.kifleKetema,
+    owner.sefer,
     businessCode,
   ];
 

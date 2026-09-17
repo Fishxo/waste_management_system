@@ -13,6 +13,8 @@ exports.findBusinessOwnerById = async (id) => {
             business_type,
             kebele,
             kifle_ketema,
+            sefer,
+            is_active,
             created_at
         FROM business_owners
         WHERE business_id = $1
@@ -55,8 +57,9 @@ exports.updateBusinessOwnerProfile = async (id, data) => {
             address = $4,
             business_type = $5,
             kebele = $6,
-            kifle_ketema = $7
-        WHERE business_id = $8
+            kifle_ketema = $7,
+            sefer = $8
+        WHERE business_id = $9
         RETURNING
             business_id,
             business_code,
@@ -68,6 +71,7 @@ exports.updateBusinessOwnerProfile = async (id, data) => {
             business_type,
             kebele,
             kifle_ketema,
+            sefer,
             created_at
     `;
 
@@ -79,6 +83,7 @@ exports.updateBusinessOwnerProfile = async (id, data) => {
         data.businessType,
         data.kebele,
         data.kifleKetema,
+        data.sefer,
         id,
     ];
 

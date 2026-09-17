@@ -11,7 +11,9 @@ exports.createFeedback = async (submitterRole, submitterId, data) => {
         submitterRole,
         submitterId,
         rating: data.rating,
+        area: data.area,
         comment: data.comment,
+        improvement: data.improvement,
     });
 };
 

@@ -1,11 +1,30 @@
 const pool = require("../../database/db");
 
-exports.countScopedNotifications = async (municipalAdminId) => {
+exports.countScopedNotifications = async (municipalAdminId, kifleKetema, notificationType = null) => {
+    const typeClause = notificationType ? " AND n.type = $3" : "";
     const result = await pool.query(
         `SELECT COUNT(*)::int AS count
-         FROM notifications
-         WHERE created_by = $1`,
-        [municipalAdminId]
+         FROM notifications n
+         WHERE (
+             n.created_by = $1
+             OR (n.created_by IS NULL AND (
+                 (n.recipient_role = 'resident' AND EXISTS (
+                     SELECT 1 FROM residents r
+                     WHERE r.id = n.recipient_id AND LOWER(r.kifle_ketema) = LOWER($2)
+                 ))
+                 OR (n.recipient_role = 'business_owner' AND EXISTS (
+                     SELECT 1 FROM business_owners b
+                     WHERE b.business_id = n.recipient_id AND LOWER(b.kifle_ketema) = LOWER($2)
+                 ))
+                 OR (n.recipient_role = 'collector' AND EXISTS (
+                     SELECT 1 FROM collectors c
+                     WHERE c.id = n.recipient_id AND LOWER(c.kifle_ketema) = LOWER($2)
+                 ))
+             ))
+         )${typeClause}`,
+        notificationType
+            ? [municipalAdminId, kifleKetema, notificationType]
+            : [municipalAdminId, kifleKetema]
     );
     return result.rows[0].count;
 };
@@ -31,16 +50,17 @@ exports.countScopedReports = async (kifleKetema) => {
     return result.rows[0].count;
 };
 
-exports.createRequest = async ({ municipalAdminId, requestType, kifleKetema, reason, notificationsCount, reportsCount }) => {
+exports.createRequest = async ({ municipalAdminId, requestType, notificationType, kifleKetema, reason, notificationsCount, reportsCount }) => {
     const query = `
         INSERT INTO delete_requests
-        (municipal_admin_id, request_type, kifle_ketema, reason, notifications_count, reports_count)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        (municipal_admin_id, request_type, notification_type, kifle_ketema, reason, notifications_count, reports_count)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING *
     `;
     const result = await pool.query(query, [
         municipalAdminId,
         requestType,
+        notificationType || null,
         kifleKetema,
         reason || null,
         notificationsCount,
@@ -51,7 +71,7 @@ exports.createRequest = async ({ municipalAdminId, requestType, kifleKetema, rea
 
 exports.getRequestsByAdmin = async (municipalAdminId) => {
     const result = await pool.query(
-        `SELECT id, request_type, status, kifle_ketema, reason,
+        `SELECT id, request_type, notification_type, status, kifle_ketema, reason,
                 notifications_count, reports_count,
                 deleted_notifications, deleted_reports,
                 reviewed_by, reviewed_at, created_at
@@ -65,7 +85,7 @@ exports.getRequestsByAdmin = async (municipalAdminId) => {
 
 exports.getAllRequests = async () => {
     const result = await pool.query(
-        `SELECT dr.id, dr.request_type, dr.status, dr.kifle_ketema, dr.reason,
+        `SELECT dr.id, dr.request_type, dr.notification_type, dr.status, dr.kifle_ketema, dr.reason,
                 dr.notifications_count, dr.reports_count,
                 dr.deleted_notifications, dr.deleted_reports,
                 dr.reviewed_by, dr.reviewed_at, dr.created_at,
@@ -119,9 +139,29 @@ exports.approveRequest = async (requestId, reviewerId) => {
         let deletedReports = 0;
 
         if (request.request_type === "notifications" || request.request_type === "all") {
+            const typeClause = request.notification_type ? " AND n.type = $3" : "";
             const delResult = await client.query(
-                `DELETE FROM notifications WHERE created_by = $1`,
-                [request.municipal_admin_id]
+                `DELETE FROM notifications n
+                 WHERE (
+                     n.created_by = $1
+                     OR (n.created_by IS NULL AND (
+                         (n.recipient_role = 'resident' AND EXISTS (
+                             SELECT 1 FROM residents r
+                             WHERE r.id = n.recipient_id AND LOWER(r.kifle_ketema) = LOWER($2)
+                         ))
+                         OR (n.recipient_role = 'business_owner' AND EXISTS (
+                             SELECT 1 FROM business_owners b
+                             WHERE b.business_id = n.recipient_id AND LOWER(b.kifle_ketema) = LOWER($2)
+                         ))
+                         OR (n.recipient_role = 'collector' AND EXISTS (
+                             SELECT 1 FROM collectors c
+                             WHERE c.id = n.recipient_id AND LOWER(c.kifle_ketema) = LOWER($2)
+                         ))
+                     ))
+                 )${typeClause}`,
+                request.notification_type
+                    ? [request.municipal_admin_id, request.kifle_ketema, request.notification_type]
+                    : [request.municipal_admin_id, request.kifle_ketema]
             );
             deletedNotifications = delResult.rowCount;
         }

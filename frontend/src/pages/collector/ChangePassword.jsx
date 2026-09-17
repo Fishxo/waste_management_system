@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import api from '../../api/axios'
 
 const inputClass =
   'border border-gray-300 rounded-lg px-3 py-2.5 text-sm w-full focus:outline-none focus:ring-2 focus:ring-teal-400'
 
 export default function CollectorChangePassword() {
+  const { t } = useTranslation('profile')
   const [form, setForm] = useState({
     currentPassword: '',
     newPassword: '',
@@ -23,7 +25,7 @@ export default function CollectorChangePassword() {
     setMessage('')
 
     if (form.newPassword !== form.confirmPassword) {
-      setError('New password and confirmation do not match')
+      setError(t('passwordMismatch'))
       return
     }
 
@@ -34,9 +36,9 @@ export default function CollectorChangePassword() {
         newPassword: form.newPassword,
       })
       setForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
-      setMessage('Password changed successfully')
+      setMessage(t('passwordChanged'))
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to change password')
+      setError(err.response?.data?.message || t('failedToChangePassword'))
     } finally {
       setSaving(false)
     }
@@ -44,9 +46,9 @@ export default function CollectorChangePassword() {
 
   return (
     <div className="max-w-lg">
-      <h2 className="text-2xl font-bold mb-2">Change Password</h2>
+      <h2 className="text-2xl font-bold mb-2">{t('changePassword')}</h2>
       <p className="text-gray-500 mb-6">
-        Update the password you use to sign in
+        {t('changePasswordDesc')}
       </p>
 
       {error && (
@@ -67,7 +69,7 @@ export default function CollectorChangePassword() {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Current Password
+              {t('currentPassword')}
             </label>
             <input
               name="currentPassword"
@@ -81,7 +83,7 @@ export default function CollectorChangePassword() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              New Password
+              {t('newPassword')}
             </label>
             <input
               name="newPassword"
@@ -96,7 +98,7 @@ export default function CollectorChangePassword() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Confirm New Password
+              {t('confirmNewPassword')}
             </label>
             <input
               name="confirmPassword"
@@ -116,7 +118,7 @@ export default function CollectorChangePassword() {
           disabled={saving}
           className="mt-6 bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium cursor-pointer disabled:opacity-50"
         >
-          {saving ? 'Updating...' : 'Change Password'}
+          {saving ? t('updating') : t('changePassword')}
         </button>
       </form>
     </div>

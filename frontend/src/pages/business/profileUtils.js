@@ -17,6 +17,7 @@ export function normalizeBusinessProfile(raw = {}) {
     businessType: get('business_type', 'businessType'),
     kifleKetema: get('kifle_ketema', 'kifleKetema'),
     kebele: get('kebele'),
+    sefer: get('sefer'),
     registrationDate: get('created_at', 'createdAt', 'registrationDate'),
   }
 }

@@ -42,7 +42,12 @@ export default function FeedbackPage({ accent = 'indigo' }) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
-  const [form, setForm] = useState({ rating: 0, comment: '' })
+  const [form, setForm] = useState({
+    rating: 0,
+    area: '',
+    comment: '',
+    improvement: '',
+  })
 
   const accentClasses = {
     indigo: {
@@ -89,10 +94,12 @@ export default function FeedbackPage({ accent = 'indigo' }) {
     try {
       await api.post('/feedback', {
         rating: form.rating,
+        area: form.area || undefined,
         comment: form.comment.trim() || undefined,
+        improvement: form.improvement.trim() || undefined,
       })
       setMessage('Thank you for your feedback!')
-      setForm({ rating: 0, comment: '' })
+      setForm({ rating: 0, area: '', comment: '', improvement: '' })
       loadFeedback()
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to submit feedback')
@@ -105,7 +112,7 @@ export default function FeedbackPage({ accent = 'indigo' }) {
     <div className="max-w-3xl">
       <h2 className="text-2xl font-bold mb-2">Feedback</h2>
       <p className="text-gray-500 mb-6">
-        Share your experience with the waste management service (UC-14).
+        Help us improve the system. Tell us what feels clear, difficult, or missing.
       </p>
 
       {message && (
@@ -124,7 +131,10 @@ export default function FeedbackPage({ accent = 'indigo' }) {
         onSubmit={handleSubmit}
         className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8"
       >
-        <h3 className="font-semibold text-gray-900 mb-4">Submit Feedback</h3>
+        <h3 className="font-semibold text-gray-900 mb-1">How is the system working for you?</h3>
+        <p className="text-sm text-gray-500 mb-4">
+          Your feedback is shared with the admin and system admin teams.
+        </p>
 
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -138,13 +148,46 @@ export default function FeedbackPage({ accent = 'indigo' }) {
 
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Comment (optional)
+            Which part of the system are you commenting on?
+          </label>
+          <select
+            value={form.area}
+            onChange={(e) => setForm({ ...form, area: e.target.value })}
+            className={`border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 ${accentClasses.ring}`}
+          >
+            <option value="">Choose an area (optional)</option>
+            <option value="dashboard">Dashboard</option>
+            <option value="reports">Reports</option>
+            <option value="schedules">Schedules</option>
+            <option value="requests">Requests</option>
+            <option value="notifications">Notifications</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            What did you like or find difficult? (optional)
           </label>
           <textarea
             rows={4}
             value={form.comment}
             onChange={(e) => setForm({ ...form, comment: e.target.value })}
-            placeholder="Tell us about your experience..."
+            placeholder="Tell us about your experience with the system..."
+            maxLength={1000}
+            className={`border border-gray-300 rounded-lg px-3 py-2 text-sm w-full resize-none focus:outline-none focus:ring-2 ${accentClasses.ring}`}
+          />
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            What should we improve? (optional)
+          </label>
+          <textarea
+            rows={3}
+            value={form.improvement}
+            onChange={(e) => setForm({ ...form, improvement: e.target.value })}
+            placeholder="Describe a change that would make the system better..."
             maxLength={1000}
             className={`border border-gray-300 rounded-lg px-3 py-2 text-sm w-full resize-none focus:outline-none focus:ring-2 ${accentClasses.ring}`}
           />
@@ -172,15 +215,32 @@ export default function FeedbackPage({ accent = 'indigo' }) {
               key={item.id}
               className="bg-white rounded-xl shadow-sm border border-gray-200 p-4"
             >
-              <div className="flex items-center justify-between gap-3 mb-2">
-                <StarRating value={item.rating} readOnly />
+              <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
+                <div className="space-y-1">
+                  <div>
+                    <p className="text-xs font-medium text-gray-500">Overall rating</p>
+                    <div className="flex items-center gap-1">
+                      <StarRating value={item.rating} readOnly />
+                      <span className="text-xs text-gray-500">{item.rating}/5</span>
+                    </div>
+                  </div>
+                </div>
                 <span className="text-xs text-gray-400">
                   {formatDate(item.created_at)}
                 </span>
               </div>
+              {item.area && (
+                <p className="text-xs text-gray-500 mb-2">Area: {item.area}</p>
+              )}
               {item.comment && (
                 <p className="text-sm text-gray-600 whitespace-pre-wrap">
                   {item.comment}
+                </p>
+              )}
+              {item.improvement && (
+                <p className="text-sm text-gray-600 whitespace-pre-wrap mt-2">
+                  <span className="font-medium">Suggested improvement: </span>
+                  {item.improvement}
                 </p>
               )}
             </div>

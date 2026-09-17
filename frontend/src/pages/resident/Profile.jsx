@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import api from '../../api/axios'
 import { normalizeProfile } from './profile/profileUtils'
 import ProfileHeader from './profile/ProfileHeader'
@@ -9,6 +10,7 @@ import ProfileSkeleton from './profile/ProfileSkeleton'
 import Toast from './profile/Toast'
 
 export default function Profile() {
+  const { t } = useTranslation()
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -24,8 +26,7 @@ export default function Profile() {
       setProfile(normalizeProfile(data?.data || {}))
     } catch (err) {
       setError(
-        err.response?.data?.message ||
-          'We could not load your profile. Please try again.'
+        err.response?.data?.message || t('profile.failedToLoadProfile')
       )
     } finally {
       setLoading(false)
@@ -48,11 +49,11 @@ export default function Profile() {
       const { data } = await api.patch('/residents/profile', formData)
       setProfile(normalizeProfile(data?.data || {}))
       setIsEditing(false)
-      setToast({ message: 'Profile updated successfully', type: 'success' })
+      setToast({ message: t('profile.profileUpdated'), type: 'success' })
       return null
     } catch (err) {
       return (
-        err.response?.data?.message || 'Failed to update profile. Please try again.'
+        err.response?.data?.message || t('profile.failedToUpdate')
       )
     } finally {
       setSaving(false)
@@ -69,14 +70,14 @@ export default function Profile() {
             !
           </div>
           <h2 className="text-lg font-semibold text-gray-900">
-            Unable to load profile
+            {t('profile.unableToLoad')}
           </h2>
           <p className="text-sm text-gray-500 mt-1">{error}</p>
           <button
             onClick={loadProfile}
             className="mt-5 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium cursor-pointer"
           >
-            Try Again
+            {t('profile.tryAgain')}
           </button>
         </div>
       </div>

@@ -27,6 +27,7 @@ exports.findById = async (issueId) => {
             id,
             schedule_id,
             resident_id,
+            business_id,
             description,
             status,
             created_at
@@ -39,50 +40,52 @@ exports.findById = async (issueId) => {
     return result.rows[0];
 };
 
-exports.findActiveIssue = async (residentId, scheduleId) => {
+exports.findActiveIssue = async (actorRole, actorId, scheduleId) => {
     const query = `
         SELECT
             id,
             schedule_id,
             resident_id,
+            business_id,
             description,
             status,
             created_at
         FROM schedule_issues
-        WHERE resident_id = $1
-          AND schedule_id = $2
+                WHERE ${actorRole === "business_owner" ? "business_id" : "resident_id"} = $1
+                    AND schedule_id = $2
           AND status IN ('pending', 'reviewing')
         LIMIT 1
     `;
 
-    const result = await pool.query(query, [residentId, scheduleId]);
+    const result = await pool.query(query, [actorId, scheduleId]);
 
     return result.rows[0];
 };
 
-exports.createIssue = async (scheduleId, residentId, description) => {
+exports.createIssue = async (scheduleId, actorRole, actorId, description) => {
     const query = `
         INSERT INTO schedule_issues
-        (schedule_id, resident_id, description)
+        (schedule_id, ${actorRole === "business_owner" ? "business_id" : "resident_id"}, description)
         VALUES ($1, $2, $3)
         RETURNING *
     `;
 
     const result = await pool.query(query, [
         scheduleId,
-        residentId,
+        actorId,
         description,
     ]);
 
     return result.rows[0];
 };
 
-exports.getAllIssues = async (status, kifleKetema) => {
+exports.getAllIssues = async (status, kifleKetema, type) => {
     let query = `
         SELECT
             si.id,
             si.schedule_id,
             si.resident_id,
+            si.business_id,
             si.description,
             si.status,
             si.created_at,
@@ -91,6 +94,10 @@ exports.getAllIssues = async (status, kifleKetema) => {
             r.email,
             r.phone_number,
             r.resident_code,
+            b.business_name,
+            b.owner_name AS business_owner_name,
+            b.business_code,
+            b.email AS business_email,
             s.kifle_ketema,
             s.kebele,
             s.sefer,
@@ -100,8 +107,10 @@ exports.getAllIssues = async (status, kifleKetema) => {
         FROM schedule_issues si
         JOIN schedules s
             ON si.schedule_id = s.id
-        JOIN residents r
+        LEFT JOIN residents r
             ON si.resident_id = r.id
+        LEFT JOIN business_owners b
+            ON si.business_id = b.business_id
     `;
 
     const values = [];
@@ -115,6 +124,12 @@ exports.getAllIssues = async (status, kifleKetema) => {
     if (status) {
         conditions.push(`si.status = $${values.length + 1}`);
         values.push(status);
+    }
+
+    if (type === 'resident') {
+        conditions.push(`si.resident_id IS NOT NULL`);
+    } else if (type === 'business') {
+        conditions.push(`si.business_id IS NOT NULL`);
     }
 
     if (conditions.length) {
@@ -133,6 +148,7 @@ exports.getIssuesByResidentId = async (residentId) => {
         SELECT
             si.id,
             si.schedule_id,
+            si.business_id,
             si.description,
             si.status,
             si.created_at,
@@ -151,6 +167,31 @@ exports.getIssuesByResidentId = async (residentId) => {
 
     const result = await pool.query(query, [residentId]);
 
+    return result.rows;
+};
+
+exports.getIssuesByBusinessOwnerId = async (businessId) => {
+    const query = `
+        SELECT
+            si.id,
+            si.schedule_id,
+            si.business_id,
+            si.description,
+            si.status,
+            si.created_at,
+            s.kifle_ketema,
+            s.kebele,
+            s.sefer,
+            s.collection_date,
+            s.collection_time,
+            s.end_time
+        FROM schedule_issues si
+        JOIN schedules s ON si.schedule_id = s.id
+        WHERE si.business_id = $1
+        ORDER BY si.created_at DESC
+    `;
+
+    const result = await pool.query(query, [businessId]);
     return result.rows;
 };
 

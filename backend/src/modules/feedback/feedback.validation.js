@@ -1,5 +1,5 @@
 exports.createFeedback = (req, res, next) => {
-    const { rating, comment } = req.body;
+    const { rating, area, comment, improvement } = req.body;
 
     if (rating === undefined || rating === null) {
         return res.status(400).json({
@@ -15,9 +15,20 @@ exports.createFeedback = (req, res, next) => {
         });
     }
 
+    const validAreas = ["dashboard", "reports", "schedules", "requests", "notifications", "other"];
+    if (area !== undefined && area !== null && !validAreas.includes(area)) {
+        return res.status(400).json({ message: "Invalid feedback area" });
+    }
+
     if (comment && String(comment).length > 1000) {
         return res.status(400).json({
             message: "Comment must be 1000 characters or less",
+        });
+    }
+
+    if (improvement && String(improvement).length > 1000) {
+        return res.status(400).json({
+            message: "Improvement suggestion must be 1000 characters or less",
         });
     }
 

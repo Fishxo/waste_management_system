@@ -7,12 +7,16 @@ exports.createNotification = async ({
     message,
     type,
     createdBy = null,
+    broadcastId = null,
 }) => {
     const query = `
         INSERT INTO notifications
-        (recipient_role, recipient_id, title, message, type, created_by)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING *
+        (recipient_role, recipient_id, title, message, type, created_by, broadcast_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING id, recipient_role, recipient_id, title, message, type,
+              is_read, created_by,
+              broadcast_id,
+              created_at AT TIME ZONE 'Africa/Addis_Ababa' AS created_at
     `;
 
     const result = await pool.query(query, [
@@ -22,6 +26,7 @@ exports.createNotification = async ({
         message,
         type,
         createdBy,
+        broadcastId,
     ]);
 
     return result.rows[0];
@@ -32,23 +37,27 @@ exports.createBulkNotifications = async (notifications) => {
 
     const values = [];
     const placeholders = notifications.map((n, index) => {
-        const offset = index * 6;
+        const offset = index * 7;
         values.push(
             n.recipientRole,
             n.recipientId,
             n.title,
             n.message,
             n.type,
-            n.createdBy || null
+            n.createdBy || null,
+            n.broadcastId || null
         );
-        return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6})`;
+        return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7})`;
     });
 
     const query = `
         INSERT INTO notifications
-        (recipient_role, recipient_id, title, message, type, created_by)
+        (recipient_role, recipient_id, title, message, type, created_by, broadcast_id)
         VALUES ${placeholders.join(", ")}
-        RETURNING *
+        RETURNING id, recipient_role, recipient_id, title, message, type,
+              is_read, created_by,
+              broadcast_id,
+              created_at AT TIME ZONE 'Africa/Addis_Ababa' AS created_at
     `;
 
     const result = await pool.query(query, values);
@@ -58,7 +67,8 @@ exports.createBulkNotifications = async (notifications) => {
 
 exports.getNotificationsForUser = async (recipientRole, recipientId) => {
     const query = `
-        SELECT id, recipient_role, recipient_id, title, message, type, is_read, created_at
+         SELECT id, recipient_role, recipient_id, title, message, type, is_read,
+             created_at AT TIME ZONE 'Africa/Addis_Ababa' AS created_at
         FROM notifications
         WHERE recipient_role = $1 AND recipient_id = $2
         ORDER BY created_at DESC
@@ -86,7 +96,9 @@ exports.markAsRead = async (notificationId, recipientRole, recipientId) => {
         UPDATE notifications
         SET is_read = true
         WHERE id = $1 AND recipient_role = $2 AND recipient_id = $3
-        RETURNING *
+        RETURNING id, recipient_role, recipient_id, title, message, type,
+              is_read, created_by,
+              created_at AT TIME ZONE 'Africa/Addis_Ababa' AS created_at
     `;
 
     const result = await pool.query(query, [
@@ -96,6 +108,28 @@ exports.markAsRead = async (notificationId, recipientRole, recipientId) => {
     ]);
 
     return result.rows[0];
+};
+
+exports.deleteNotification = async (notificationId, recipientRole, recipientId) => {
+    const result = await pool.query(
+        `DELETE FROM notifications
+         WHERE id = $1 AND recipient_role = $2 AND recipient_id = $3
+         RETURNING id`,
+        [notificationId, recipientRole, recipientId]
+    );
+
+    return result.rows[0];
+};
+
+exports.deleteAllNotifications = async (recipientRole, recipientId) => {
+    const result = await pool.query(
+        `DELETE FROM notifications
+         WHERE recipient_role = $1 AND recipient_id = $2
+         RETURNING id`,
+        [recipientRole, recipientId]
+    );
+
+    return result.rows.length;
 };
 
 exports.markAllAsRead = async (recipientRole, recipientId) => {
@@ -231,19 +265,36 @@ exports.getNotificationsForAdmin = async ({ adminId, adminKifle, recipientRole, 
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
-    const countQuery = `SELECT COUNT(*)::int AS total FROM notifications n ${whereClause}`;
+    const countQuery = `
+        SELECT COUNT(*)::int AS total
+        FROM (
+            SELECT COALESCE(n.broadcast_id::text, 'single:' || n.id::text) AS event_key
+            FROM notifications n ${whereClause}
+            GROUP BY event_key
+        ) events
+    `;
     const countResult = await pool.query(countQuery, values);
     const total = countResult.rows[0].total;
 
     const offset = (page - 1) * limit;
     const dataQuery = `
-        SELECT n.id, n.recipient_role, n.recipient_id, n.title, n.message,
-               n.type, n.is_read, n.created_at,
-               ma.username AS sent_by_name
+        SELECT
+               MIN(n.id) AS id,
+               (ARRAY_AGG(n.broadcast_id))[1] AS broadcast_id,
+               MIN(n.recipient_role) AS recipient_role,
+               COUNT(*)::int AS recipient_count,
+               ARRAY_AGG(n.recipient_id ORDER BY n.recipient_id) AS recipient_ids,
+               MIN(n.title) AS title,
+               MIN(n.message) AS message,
+               MIN(n.type) AS type,
+               BOOL_AND(n.is_read) AS is_read,
+               MAX(n.created_at) AT TIME ZONE 'Africa/Addis_Ababa' AS created_at,
+               MIN(ma.username) AS sent_by_name
         FROM notifications n
         LEFT JOIN municipal_admins ma ON n.created_by = ma.id
         ${whereClause}
-        ORDER BY n.created_at DESC
+        GROUP BY COALESCE(n.broadcast_id::text, 'single:' || n.id::text)
+        ORDER BY MAX(n.created_at) DESC
         LIMIT $${paramIndex++} OFFSET $${paramIndex}
     `;
     values.push(limit, offset);
@@ -293,11 +344,19 @@ exports.getNotificationStats = async (adminId = null, adminKifle = null) => {
         ? `WHERE (${scopeClauses.join(" OR ")})`
         : "";
 
-    const totalQuery = `SELECT COUNT(*)::int AS total FROM notifications n ${where}`;
+    const totalQuery = `
+        SELECT COUNT(*)::int AS total
+        FROM (
+            SELECT COALESCE(n.broadcast_id::text, 'single:' || n.id::text) AS event_key
+            FROM notifications n ${where}
+            GROUP BY event_key
+        ) events
+    `;
     const totalResult = await pool.query(totalQuery, params);
 
     const roleQuery = `
-        SELECT n.recipient_role, COUNT(*)::int AS count
+         SELECT n.recipient_role,
+             COUNT(DISTINCT COALESCE(n.broadcast_id::text, 'single:' || n.id::text))::int AS count
         FROM notifications n
         ${where}
         GROUP BY n.recipient_role
@@ -305,7 +364,8 @@ exports.getNotificationStats = async (adminId = null, adminKifle = null) => {
     const roleResult = await pool.query(roleQuery, params);
 
     const typeQuery = `
-        SELECT n.type, COUNT(*)::int AS count
+         SELECT n.type,
+             COUNT(DISTINCT COALESCE(n.broadcast_id::text, 'single:' || n.id::text))::int AS count
         FROM notifications n
         ${where}
         GROUP BY n.type

@@ -1,36 +1,37 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import api from '../../api/axios'
 
 const ISSUE_OPTIONS = [
   {
     value: 'missed',
-    label: 'Collection was missed',
-    detail: 'The scheduled waste collection did not happen as planned.',
+    labelKey: 'issueModal.typeMissed',
+    detailKey: 'issueModal.typeMissedDetail',
   },
   {
     value: 'wrong_time',
-    label: 'Collection happened at the wrong time',
-    detail: 'Waste collection occurred outside the scheduled collection time.',
+    labelKey: 'issueModal.typeWrongTime',
+    detailKey: 'issueModal.typeWrongTimeDetail',
   },
   {
     value: 'partial',
-    label: 'Waste was not fully collected',
-    detail: 'Only part of the waste was collected during the scheduled pickup.',
+    labelKey: 'issueModal.typePartial',
+    detailKey: 'issueModal.typePartialDetail',
   },
   {
     value: 'overflow',
-    label: 'Overflowing or uncollected waste remains',
-    detail: 'Waste is still overflowing or left behind after collection.',
+    labelKey: 'issueModal.typeOverflow',
+    detailKey: 'issueModal.typeOverflowDetail',
   },
   {
     value: 'incorrect_schedule',
-    label: 'Schedule information seems incorrect',
-    detail: 'The published schedule details appear to be incorrect for this area.',
+    labelKey: 'issueModal.typeIncorrectSchedule',
+    detailKey: 'issueModal.typeIncorrectScheduleDetail',
   },
   {
     value: 'other',
-    label: 'Other',
-    detail: null,
+    labelKey: 'issueModal.typeOther',
+    detailKey: null,
   },
 ]
 
@@ -49,28 +50,28 @@ function formatTimeRange(start, end) {
   return end ? `${formatTime(start)} — ${formatTime(end)}` : formatTime(start)
 }
 
-function buildDescription(issueType, customIssue) {
+function buildDescription(issueType, customIssue, t) {
   const option = ISSUE_OPTIONS.find((item) => item.value === issueType)
   if (issueType === 'other') {
     return customIssue.trim()
   }
-  return option?.detail || ''
+  return option?.detailKey ? t(option.detailKey) : ''
 }
 
-function validateForm(issueType, customIssue) {
+function validateForm(issueType, customIssue, t) {
   const errors = {}
 
   if (!issueType) {
-    errors.issueType = 'Please select an issue type'
+    errors.issueType = t('issueModal.pleaseSelectType')
   }
 
   if (issueType === 'other') {
     if (!customIssue.trim()) {
-      errors.customIssue = 'Please describe your issue'
+      errors.customIssue = t('issueModal.pleaseDescribe')
     } else if (customIssue.trim().length < 10) {
-      errors.customIssue = 'Description should be at least 10 characters'
-    } else if (!/[a-zA-Z]/.test(customIssue)) {
-      errors.customIssue = 'Description must contain at least one letter'
+      errors.customIssue = t('issueModal.minLength')
+    } else if (!/[a-zA-Z]/.test(customIssue) && !/[\u1200-\u137F]/.test(customIssue)) {
+      errors.customIssue = t('issueModal.letters')
     }
   }
 
@@ -78,6 +79,7 @@ function validateForm(issueType, customIssue) {
 }
 
 export default function RaiseScheduleIssueModal({ schedule, onClose, onSuccess }) {
+  const { t } = useTranslation()
   const [issueType, setIssueType] = useState('')
   const [customIssue, setCustomIssue] = useState('')
   const [errors, setErrors] = useState({})
@@ -107,13 +109,13 @@ export default function RaiseScheduleIssueModal({ schedule, onClose, onSuccess }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    const nextErrors = validateForm(issueType, customIssue)
+    const nextErrors = validateForm(issueType, customIssue, t)
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)
       return
     }
 
-    const description = buildDescription(issueType, customIssue)
+    const description = buildDescription(issueType, customIssue, t)
 
     setSubmitting(true)
     setError('')
@@ -122,7 +124,7 @@ export default function RaiseScheduleIssueModal({ schedule, onClose, onSuccess }
       onSuccess?.()
       onClose()
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to submit issue')
+      setError(err.response?.data?.message || t('issueModal.failedToSubmit'))
     } finally {
       setSubmitting(false)
     }
@@ -132,34 +134,36 @@ export default function RaiseScheduleIssueModal({ schedule, onClose, onSuccess }
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b border-gray-100">
-          <h3 className="text-xl font-bold text-gray-900">Raise Schedule Issue</h3>
+          <h3 className="text-xl font-bold text-gray-900">{t('issueModal.title')}</h3>
           <p className="text-sm text-gray-500 mt-1">
-            Choose the issue type for this collection schedule. The issue is
-            linked to this specific schedule.
+            {t('issueModal.intro')}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4">
           <div className="rounded-xl bg-gray-50 border border-gray-200 p-4 text-sm text-gray-600 space-y-1">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-              Selected schedule
+              {t('issueModal.selectedSchedule')}
             </p>
             <p>
-              <span className="text-gray-400">Day & time:</span>{' '}
+              <span className="text-gray-400">{t('issueModal.dayAndTime')}</span>{' '}
               {schedule.collection_date
                 ? new Date(schedule.collection_date).toLocaleDateString()
                 : '—'}{' '}
-              at {' '}
+              {t('issues.at')}{' '}
               {formatTimeRange(schedule.collection_time, schedule.end_time)}
             </p>
             <p>
-              <span className="text-gray-400">Location:</span>{' '}
-              {schedule.kifle_ketema}, Kebele {schedule.kebele || '—'},{' '}
-              Sefer {schedule.sefer || '—'}
+              <span className="text-gray-400">{t('issueModal.location')}</span>{' '}
+              {t('issues.location', {
+                kifleKetema: schedule.kifle_ketema,
+                kebele: schedule.kebele || '—',
+                sefer: schedule.sefer || '—',
+              })}
             </p>
             {schedule.notes && (
               <p>
-                <span className="text-gray-400">Notes:</span> {schedule.notes}
+                <span className="text-gray-400">{t('issueModal.notes')}</span> {schedule.notes}
               </p>
             )}
           </div>
@@ -175,7 +179,7 @@ export default function RaiseScheduleIssueModal({ schedule, onClose, onSuccess }
               htmlFor="issueType"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              What is the issue?
+              {t('issueModal.whatIsTheIssue')}
             </label>
             <select
               id="issueType"
@@ -186,10 +190,10 @@ export default function RaiseScheduleIssueModal({ schedule, onClose, onSuccess }
                 errors.issueType ? 'border-red-300' : 'border-gray-300'
               }`}
             >
-              <option value="">Select an issue type</option>
+              <option value="">{t('issueModal.selectType')}</option>
               {ISSUE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
-                  {option.label}
+                  {t(option.labelKey)}
                 </option>
               ))}
             </select>
@@ -204,7 +208,7 @@ export default function RaiseScheduleIssueModal({ schedule, onClose, onSuccess }
                 htmlFor="customIssue"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Describe your issue
+                {t('issueModal.describeYourIssue')}
               </label>
               <textarea
                 id="customIssue"
@@ -215,7 +219,7 @@ export default function RaiseScheduleIssueModal({ schedule, onClose, onSuccess }
                   setCustomIssue(e.target.value)
                   setErrors({ ...errors, customIssue: '' })
                 }}
-                placeholder="Write your issue here..."
+                placeholder={t('issueModal.writeIssuePlaceholder')}
                 className={`border rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none ${
                   errors.customIssue ? 'border-red-300' : 'border-gray-300'
                 }`}
@@ -228,7 +232,12 @@ export default function RaiseScheduleIssueModal({ schedule, onClose, onSuccess }
 
           {issueType && issueType !== 'other' && (
             <div className="rounded-lg bg-indigo-50 border border-indigo-100 px-3 py-2 text-sm text-indigo-900">
-              {ISSUE_OPTIONS.find((option) => option.value === issueType)?.detail}
+              {ISSUE_OPTIONS.find((option) => option.value === issueType)?.detailKey
+                ? t(
+                    ISSUE_OPTIONS.find((option) => option.value === issueType)
+                      .detailKey
+                  )
+                : ''}
             </div>
           )}
 
@@ -238,7 +247,7 @@ export default function RaiseScheduleIssueModal({ schedule, onClose, onSuccess }
               disabled={submitting}
               className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg text-sm font-medium disabled:opacity-50 cursor-pointer"
             >
-              {submitting ? 'Submitting...' : 'Submit Issue'}
+              {submitting ? t('issueModal.submitting') : t('issueModal.submitIssue')}
             </button>
             <button
               type="button"
@@ -246,7 +255,7 @@ export default function RaiseScheduleIssueModal({ schedule, onClose, onSuccess }
               disabled={submitting}
               className="bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-lg text-sm font-medium cursor-pointer"
             >
-              Cancel
+              {t('issueModal.cancel')}
             </button>
           </div>
         </form>

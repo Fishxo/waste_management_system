@@ -52,13 +52,14 @@ function formatDate(value) {
   if (!value) return '—'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '—'
-  return date.toLocaleString(undefined, {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Africa/Addis_Ababa',
     year: 'numeric',
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  })
+  }).format(date)
 }
 
 function StatCard({ label, value, accent }) {
@@ -226,7 +227,7 @@ export default function AdminNotificationHistory() {
                 <tr className="border-b bg-gray-50 text-left text-sm">
                   <th className="px-4 py-3 font-medium">Title</th>
                   <th className="px-4 py-3 font-medium">Recipient Type</th>
-                  <th className="px-4 py-3 font-medium">Recipient ID</th>
+                  <th className="px-4 py-3 font-medium">Recipients</th>
                   <th className="px-4 py-3 font-medium">Type</th>
                   <th className="px-4 py-3 font-medium">Sent By</th>
                   <th className="px-4 py-3 font-medium">Sent At</th>
@@ -254,7 +255,9 @@ export default function AdminNotificationHistory() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-gray-600">
-                      {notification.recipient_id ?? '—'}
+                      {notification.recipient_count > 1
+                        ? `${notification.recipient_count} recipients`
+                        : notification.recipient_ids?.[0] ?? '—'}
                     </td>
                     <td className="px-4 py-3">
                       <span
@@ -357,7 +360,12 @@ export default function AdminNotificationHistory() {
               label="Recipient Type"
               value={formatRole(selected.recipient_role)}
             />
-            <DetailRow label="Recipient ID" value={selected.recipient_id} />
+            <DetailRow
+              label="Recipients"
+              value={selected.recipient_count > 1
+                ? `${selected.recipient_count} recipients`
+                : selected.recipient_ids?.[0]}
+            />
             <DetailRow label="Type" value={formatType(selected.type)} />
             <DetailRow label="Sent By" value={selected.sent_by_name || 'System'} />
             <DetailRow label="Status" value={selected.is_read ? 'Read' : 'Unread'} />

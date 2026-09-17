@@ -19,13 +19,13 @@ exports.createReport = async (req, res) => {
             });
         }
 
-        if (err.message === "Resident not found" || err.message === "Collector not found") {
+        if (err.message === "Resident not found" || err.message === "Collector not found" || err.message === "Business owner not found") {
             return res.status(404).json({
                 message: err.message,
             });
         }
 
-        if (err.message === "You have reached the maximum of 3 reports per day.") {
+        if (err.message.includes("You have reached the maximum of") && err.message.includes("reports per day")) {
             return res.status(400).json({
                 message: err.message,
             });
@@ -164,13 +164,13 @@ exports.updateReport = async (req, res, next) => {
             });
         }
 
-        if (err.message === "resident is not found" || err.message === "collector is not found") {
+        if (err.message === "resident is not found" || err.message === "collector is not found" || err.message === "business owner is not found") {
             return res.status(403).json({
                 message: err.message,
             });
         }
 
-        if (err.message === "report in progress state can not be edit") {
+        if (err.message === "Only pending reports can be edited") {
             return res.status(403).json({
                 message: err.message,
             });

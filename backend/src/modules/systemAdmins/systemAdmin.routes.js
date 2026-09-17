@@ -9,6 +9,7 @@ const adminCommentController = require("../adminComments/adminComment.controller
 const adminCommentValidation = require("../adminComments/adminComment.validation");
 const deleteRequestController = require("../deleteRequests/deleteRequest.controller");
 const deleteRequestValidation = require("../deleteRequests/deleteRequest.validation");
+const feedbackController = require("../feedback/feedback.controller");
 const {
     authenticateSystemAdmin,
 } = require("../../middleware/systemAdminAuth.middleware");
@@ -228,6 +229,12 @@ router.get(
     "/reports/stats",
     authenticateSystemAdmin,
     systemAdminController.getReportsStats
+);
+
+router.get(
+    "/feedback",
+    authenticateSystemAdmin,
+    feedbackController.getAllFeedback
 );
 
 //list all messages/comments sent by municipal admins

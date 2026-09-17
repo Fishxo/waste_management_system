@@ -257,9 +257,9 @@ exports.updateOnDemandCollectionStatus = async (
 ) => {
     const query = `
         UPDATE on_demand_requests
-        SET collection_status = $1,
+        SET collection_status = $1::varchar,
             collector_notes = COALESCE($2, collector_notes),
-            completed_at = CASE WHEN $1 = 'completed' THEN CURRENT_TIMESTAMP ELSE completed_at END
+            completed_at = CASE WHEN $1::text = 'completed' THEN CURRENT_TIMESTAMP ELSE completed_at END
         WHERE id = $3 AND collector_id = $4 AND status = 'approved'
         RETURNING *
     `;
@@ -298,12 +298,45 @@ exports.assignCollectorToRequest = async (requestId, collectorId) => {
             confirmed_at = NULL,
             collector_notes = NULL
         WHERE id = $2
-          AND status = 'approved'
-          AND (collection_status IS NULL OR collection_status IN ('unassigned', 'assigned', 'in_progress'))
+          AND status IN ('pending', 'approved')
+          AND (
+              collection_status IS NULL
+              OR collection_status IN ('unassigned', 'assigned', 'in_progress')
+              OR (
+                  collection_status = 'completed'
+                  AND EXISTS (
+                      SELECT 1 FROM on_demand_issues issue
+                      WHERE issue.request_id = on_demand_requests.id
+                  )
+              )
+          )
+                    AND NOT EXISTS (
+                            SELECT 1
+                            FROM on_demand_requests existing
+                            WHERE existing.collector_id = $1
+                                AND existing.id <> $2
+                                AND existing.status IN ('pending', 'approved')
+                                AND (existing.collection_status IS NULL OR existing.collection_status IN ('unassigned', 'assigned', 'in_progress'))
+                    )
         RETURNING *
     `;
 
     const result = await pool.query(query, [collectorId, requestId]);
+
+    return result.rows[0];
+};
+
+exports.findActiveOnDemandAssignment = async (requestId, collectorId) => {
+    const result = await pool.query(
+        `SELECT id
+         FROM on_demand_requests
+         WHERE collector_id = $1
+           AND id <> $2
+           AND status IN ('pending', 'approved')
+           AND (collection_status IS NULL OR collection_status IN ('unassigned', 'assigned', 'in_progress'))
+         LIMIT 1`,
+        [collectorId, requestId]
+    );
 
     return result.rows[0];
 };

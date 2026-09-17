@@ -279,13 +279,22 @@ exports.assignCollectorToRequest = async (requestId, collectorId) => {
         throw new Error("Collector not found");
     }
 
+    const existingAssignment = await collectorRepository.findActiveOnDemandAssignment(
+        requestId,
+        collectorId
+    );
+
+    if (existingAssignment) {
+        throw new Error("Collector is already assigned to another active request");
+    }
+
     const request = await collectorRepository.assignCollectorToRequest(
         requestId,
         collectorId
     );
 
     if (!request) {
-        throw new Error("Approved request not found");
+        throw new Error("Pending or approved request not found");
     }
 
     try {

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import api from '../../api/axios'
 
 export default function CreateReport() {
+  const { t } = useTranslation('collector')
   const [form, setForm] = useState({ title: '', description: '' })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -28,9 +30,9 @@ export default function CreateReport() {
       const { data } = await api.get('/reports/daily-count')
       setDailyCount(data.data || null)
       setForm({ title: '', description: '' })
-      setSuccess('Report submitted successfully.')
+      setSuccess(t('reportSubmitted'))
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create report')
+      setError(err.response?.data?.message || t('failedToCreateReport'))
     } finally {
       setLoading(false)
     }
@@ -38,10 +40,9 @@ export default function CreateReport() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6">Create Report</h2>
+      <h2 className="text-2xl font-bold mb-6">{t('createReportTitle')}</h2>
       <p className="text-gray-500 text-sm mb-4">
-        Use this page to report a complaint or waste-related issue you
-        encountered while working.
+        {t('createReportIntro')}
       </p>
       <div className="bg-white rounded-lg shadow p-6 max-w-lg">
         {error && (
@@ -56,12 +57,15 @@ export default function CreateReport() {
           <div className="mb-5 rounded-xl border border-sky-100 bg-sky-50 p-4">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-medium text-sky-900">
-                Today's report limit
+                {t('todaysReportLimit')}
               </p>
               <p className="text-sm font-semibold text-sky-700">
                 {dailyCount.remaining === 0
-                  ? 'Limit reached'
-                  : `${dailyCount.remaining} of ${dailyCount.max} remaining`}
+                  ? t('limitReached')
+                  : t('remainingOf', {
+                      remaining: dailyCount.remaining,
+                      max: dailyCount.max,
+                    })}
               </p>
             </div>
             <div className="h-2 rounded-full bg-sky-100 overflow-hidden">
@@ -78,19 +82,19 @@ export default function CreateReport() {
               />
             </div>
             <p className="text-xs text-sky-600 mt-2">
-              You can create up to {dailyCount.max} reports per day.{' '}
+              {t('createUpTo', { max: dailyCount.max })}{' '}
               {dailyCount.remaining === 0
-                ? 'Your daily limit has been reached.'
+                ? t('dailyLimitReached')
                 : dailyCount.remaining === 1
-                ? 'You have 1 report left today.'
-                : `You have ${dailyCount.remaining} reports left today.`}
+                ? t('oneLeft')
+                : t('reportsLeft', { count: dailyCount.remaining })}
             </p>
           </div>
         )}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Title
+              {t('reportTitle')}
             </label>
             <input
               name="title"
@@ -103,7 +107,7 @@ export default function CreateReport() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description
+              {t('description')}
             </label>
             <textarea
               name="description"
@@ -121,10 +125,10 @@ export default function CreateReport() {
             className="bg-sky-600 hover:bg-sky-700 text-white py-2 rounded text-sm font-medium disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
           >
             {loading
-              ? 'Submitting...'
+              ? t('submitting')
               : dailyCount?.remaining === 0
-              ? 'Daily limit reached'
-              : 'Submit Report'}
+              ? t('dailyLimitReachedButton')
+              : t('submitReport')}
           </button>
         </form>
       </div>

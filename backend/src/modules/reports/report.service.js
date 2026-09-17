@@ -1,6 +1,7 @@
 const reportRepository = require("./report.repository");
 const residentRepository = require("../residents/resident.repository");
 const collectorRepository = require("../collectors/collector.repository");
+const businessOwnerRepository = require("../businessOwners/businessOwner.repository");
 
 function isLegacyScheduleIssueReport(report) {
     return (
@@ -9,13 +10,19 @@ function isLegacyScheduleIssueReport(report) {
 }
 
 function getReporterRole(role) {
-    return role === "collector" ? "collector" : "resident";
+    if (role === "collector") return "collector";
+    if (role === "business_owner") return "business_owner";
+    return "resident";
 }
 
 const MAX_DAILY_REPORTS = 3;
+const MAX_BUSINESS_DAILY_REPORTS = 5;
 
 exports.getDailyReportCount = async (user) => {
     const role = getReporterRole(user.role);
+    const maxDailyReports = role === "business_owner"
+        ? MAX_BUSINESS_DAILY_REPORTS
+        : MAX_DAILY_REPORTS;
     const used = await reportRepository.countReportsToday({
         role,
         ownerId: user.id,
@@ -23,8 +30,8 @@ exports.getDailyReportCount = async (user) => {
 
     return {
         used,
-        max: MAX_DAILY_REPORTS,
-        remaining: Math.max(0, MAX_DAILY_REPORTS - used),
+        max: maxDailyReports,
+        remaining: Math.max(0, maxDailyReports - used),
     };
 };
 
@@ -39,6 +46,16 @@ exports.createReport = async (user, data) => {
         }
 
         if (!collector.is_active) {
+            throw new Error("Your account has been deactivated");
+        }
+    } else if (role === "business_owner") {
+        const businessOwner = await businessOwnerRepository.findBusinessOwnerById(user.id);
+
+        if (!businessOwner) {
+            throw new Error("Business owner not found");
+        }
+
+        if (businessOwner.is_active === false) {
             throw new Error("Your account has been deactivated");
         }
     } else {
@@ -58,8 +75,12 @@ exports.createReport = async (user, data) => {
         ownerId: user.id,
     });
 
-    if (todayCount >= MAX_DAILY_REPORTS) {
-        throw new Error("You have reached the maximum of 3 reports per day.");
+    const maxDailyReports = role === "business_owner"
+        ? MAX_BUSINESS_DAILY_REPORTS
+        : MAX_DAILY_REPORTS;
+
+    if (todayCount >= maxDailyReports) {
+        throw new Error(`You have reached the maximum of ${maxDailyReports} reports per day.`);
     }
 
     const report = await reportRepository.createReport(
@@ -138,6 +159,20 @@ exports.updateReport = async (reportId, data, user) => {
         if (!collector.is_active) {
             throw new Error("your account has been deactivated, you can not make update");
         }
+    } else if (role === "business_owner") {
+        if (report.business_id !== user.id) {
+            throw new Error("business owner is not found");
+        }
+
+        const businessOwner = await businessOwnerRepository.findBusinessOwnerById(user.id);
+
+        if (!businessOwner) {
+            throw new Error("Business owner not found");
+        }
+
+        if (businessOwner.is_active === false) {
+            throw new Error("your account has been deactivated, you can not make update");
+        }
     } else {
         if (report.resident_id !== user.id) {
             throw new Error("resident is not found");
@@ -154,8 +189,8 @@ exports.updateReport = async (reportId, data, user) => {
         }
     }
 
-    if (report.status == "in_progress") {
-        throw new Error("report in progress state can not be edit");
+    if (report.status !== "pending") {
+        throw new Error("Only pending reports can be edited");
     }
     return await reportRepository.updateReport(reportId, data);
     
@@ -171,9 +206,10 @@ exports.deleteReport = async (reportId, user) => {
     }
 
     const role = getReporterRole(user.role);
-    const ownedByUser =
-        role === "collector"
-            ? report.collector_id === user.id
+    const ownedByUser = role === "collector"
+        ? report.collector_id === user.id
+        : role === "business_owner"
+            ? report.business_id === user.id
             : report.resident_id === user.id;
 
     if (!ownedByUser) {

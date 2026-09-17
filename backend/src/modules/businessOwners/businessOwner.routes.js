@@ -36,4 +36,10 @@ router.get(
     businessOwnerController.getBusinessOwnerSchedules
 );
 
+router.get(
+    "/schedule-issues",
+    authMiddleware.authenticate,
+    businessOwnerController.getBusinessOwnerScheduleIssues
+);
+
 module.exports = router;

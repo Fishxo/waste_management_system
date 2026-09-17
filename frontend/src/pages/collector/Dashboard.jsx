@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import api from '../../api/axios'
 import Loading from '../../components/Loading'
 import { useAuth } from '../../context/AuthContext'
@@ -32,12 +33,19 @@ function formatDate(value) {
   })
 }
 
-function formatStatus(status) {
+function formatStatus(status, t) {
   if (!status) return '—'
+  const key = status === 'in_progress' ? 'inProgress' : status
+  const label = t(`common.${key}`)
+  if (label !== `common.${key}`) return label
   return status
     .split('_')
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ')
+}
+
+function statusLabel(labelKey, t) {
+  return t(`common.${labelKey === 'in_progress' ? 'inProgress' : labelKey}`)
 }
 
 function formatTime(value) {
@@ -55,7 +63,22 @@ function formatTimeRange(start, end) {
   return end ? `${formatTime(start)} — ${formatTime(end)}` : formatTime(start)
 }
 
+const WORK_STATUS_SECTIONS = [
+  { status: 'pending', labelKey: 'pending', color: 'border-gray-200 bg-gray-50' },
+  { status: 'in_progress', labelKey: 'in_progress', color: 'border-orange-200 bg-orange-50' },
+  { status: 'completed', labelKey: 'completed', color: 'border-green-200 bg-green-50' },
+  { status: 'failed', labelKey: 'failed', color: 'border-red-200 bg-red-50' },
+]
+
+function statusGroups(items, getStatus) {
+  return WORK_STATUS_SECTIONS.map((section) => ({
+    ...section,
+    items: items.filter((item) => getStatus(item) === section.status),
+  }))
+}
+
 function TaskCard({ title, subtitle, status, children, onUpdate, updating }) {
+  const { t } = useTranslation('collector')
   const allowedStatuses = STATUS_TRANSITIONS[status] || []
   const [selectedStatus, setSelectedStatus] = useState(allowedStatuses[0] || '')
   const [reason, setReason] = useState('')
@@ -71,7 +94,7 @@ function TaskCard({ title, subtitle, status, children, onUpdate, updating }) {
     (selectedStatus !== 'failed' || reason.trim())
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
+    <div className="bg-white border-b border-gray-200 p-4 last:border-b-0">
       <div className="flex items-start justify-between gap-3 mb-3">
         <div>
           <h3 className="font-semibold text-gray-900">{title}</h3>
@@ -84,7 +107,7 @@ function TaskCard({ title, subtitle, status, children, onUpdate, updating }) {
             statusBadge[status] || 'bg-gray-100 text-gray-800'
           }`}
         >
-          {formatStatus(status)}
+          {formatStatus(status, t)}
         </span>
       </div>
       {children}
@@ -98,7 +121,7 @@ function TaskCard({ title, subtitle, status, children, onUpdate, updating }) {
           >
             {allowedStatuses.map((s) => (
               <option key={s} value={s}>
-                {formatStatus(s)}
+                {formatStatus(s, t)}
               </option>
             ))}
           </select>
@@ -106,7 +129,7 @@ function TaskCard({ title, subtitle, status, children, onUpdate, updating }) {
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="What happened? (required)"
+              placeholder={t('failedReasonPlaceholder')}
               disabled={updating}
               rows={2}
               className="w-full border border-red-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-red-300 disabled:opacity-50 resize-none"
@@ -118,7 +141,7 @@ function TaskCard({ title, subtitle, status, children, onUpdate, updating }) {
             disabled={!canUpdate || updating}
             className="w-full bg-teal-600 hover:bg-teal-700 text-white py-2 rounded-lg text-sm font-medium cursor-pointer disabled:opacity-50"
           >
-            {updating ? 'Updating...' : 'Submit'}
+            {updating ? t('updating') : t('submit')}
           </button>
         </div>
       )}
@@ -126,13 +149,28 @@ function TaskCard({ title, subtitle, status, children, onUpdate, updating }) {
   )
 }
 
-export default function CollectorDashboard() {
+export default function CollectorDashboard({ view = 'all' }) {
   const { user } = useAuth()
+  const { t } = useTranslation('collector')
   const [schedules, setSchedules] = useState([])
   const [requests, setRequests] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [updating, setUpdating] = useState(null)
+  const [statusFilter, setStatusFilter] = useState('all')
+
+  const scheduleGroups = statusGroups(schedules, (schedule) => {
+    return schedule.status === 'scheduled' || schedule.status === 'assigned'
+      ? 'pending'
+      : schedule.status
+  })
+  const requestGroups = statusGroups(requests, (request) => {
+    if (request.collection_status === 'assigned' || !request.collection_status) {
+      return 'pending'
+    }
+    if (request.collection_status === 'confirmed') return 'completed'
+    return request.collection_status
+  })
 
   const loadDashboard = () => {
     setLoading(true)
@@ -144,7 +182,7 @@ export default function CollectorDashboard() {
         setRequests(payload.onDemandRequests || [])
       })
       .catch((err) =>
-        setError(err.response?.data?.message || 'Failed to load dashboard')
+        setError(err.response?.data?.message || t('failedToLoadDashboard'))
       )
       .finally(() => setLoading(false))
   }
@@ -162,7 +200,7 @@ export default function CollectorDashboard() {
       })
       loadDashboard()
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update schedule')
+      setError(err.response?.data?.message || t('failedToUpdateSchedule'))
     } finally {
       setUpdating(null)
     }
@@ -177,7 +215,7 @@ export default function CollectorDashboard() {
       })
       loadDashboard()
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update request')
+      setError(err.response?.data?.message || t('failedToUpdateRequest'))
     } finally {
       setUpdating(null)
     }
@@ -187,9 +225,9 @@ export default function CollectorDashboard() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-2">Collector Dashboard</h1>
+      <h1 className="text-2xl font-bold mb-2">{t('dashboard')}</h1>
       <p className="text-gray-600 mb-6">
-        Welcome, {user?.fullName}. Manage your assigned collection tasks below.
+        {t('welcome', { name: user?.fullName })} {t('welcomeDesc')}
       </p>
 
       {error && (
@@ -198,84 +236,119 @@ export default function CollectorDashboard() {
         </p>
       )}
 
+      <div className="mb-6 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => setStatusFilter('all')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium cursor-pointer ${statusFilter === 'all' ? 'bg-teal-600 text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+        >
+          {t('common.all')}
+        </button>
+        {WORK_STATUS_SECTIONS.map((section) => (
+          <button
+            key={section.status}
+            type="button"
+            onClick={() => setStatusFilter(section.status)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium cursor-pointer ${statusFilter === section.status ? 'bg-teal-600 text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+          >
+            {statusLabel(section.labelKey, t)}
+          </button>
+        ))}
+      </div>
+
+      {view !== 'requests' && (
       <section className="mb-8">
-        <h2 className="text-lg font-semibold mb-4">Assigned Schedules</h2>
+        <h2 className="text-lg font-semibold mb-4">{t('assignedSchedules')}</h2>
         {schedules.length === 0 ? (
           <p className="text-gray-500 text-sm">
-            No schedules assigned to you yet.
+            {t('noSchedulesAssigned')}
           </p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {schedules.map((schedule) => (
-              <TaskCard
-                key={schedule.id}
-                title={`${formatDate(schedule.collection_date)} — ${formatTimeRange(
-                  schedule.collection_time,
-                  schedule.end_time
-                )}`}
-                subtitle={`${schedule.kifle_ketema}, Kebele ${schedule.kebele}, ${schedule.sefer}`}
-                status={schedule.status}
-                onUpdate={(status, notes) =>
-                  handleScheduleUpdate(schedule.id, status, notes)
-                }
-                updating={updating === `schedule-${schedule.id}`}
-              >
-                {schedule.notes && (
-                  <p className="text-sm text-gray-600">{schedule.notes}</p>
+          <div className="space-y-5">
+            {scheduleGroups.map((group) => (
+              statusFilter !== 'all' && statusFilter !== group.status ? null :
+              <div key={group.status} className={`rounded-xl border p-4 ${group.color}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-gray-800">{statusLabel(group.labelKey, t)}</h3>
+                  <span className="text-xs font-medium text-gray-500">{group.items.length}</span>
+                </div>
+                {group.items.length === 0 ? (
+                  <p className="text-sm text-gray-500">{t('noSchedulesGroup', { label: statusLabel(group.labelKey, t).toLowerCase() })}</p>
+                ) : (
+                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    {group.items.map((schedule) => (
+                      <TaskCard
+                        key={schedule.id}
+                        title={`${formatDate(schedule.collection_date)} — ${formatTimeRange(schedule.collection_time, schedule.end_time)}`}
+                        subtitle={t('scheduleLocation', {
+                          kifleKetema: schedule.kifle_ketema,
+                          kebele: schedule.kebele,
+                          sefer: schedule.sefer,
+                        })}
+                        status={schedule.status}
+                        onUpdate={(status, notes) => handleScheduleUpdate(schedule.id, status, notes)}
+                        updating={updating === `schedule-${schedule.id}`}
+                      >
+                        {schedule.notes && <p className="text-sm text-gray-600">{schedule.notes}</p>}
+                      </TaskCard>
+                    ))}
+                  </div>
                 )}
-              </TaskCard>
+              </div>
             ))}
           </div>
         )}
       </section>
+      )}
 
+      {view !== 'schedules' && (
       <section>
         <h2 className="text-lg font-semibold mb-4">
-          Approved On-Demand Requests
+          {t('approvedOnDemandRequests')}
         </h2>
         {requests.length === 0 ? (
           <p className="text-gray-500 text-sm">
-            No approved on-demand requests assigned to you yet.
+            {t('noRequestsAssigned')}
           </p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {requests.map((request) => (
-              <TaskCard
-                key={request.id}
-                title={request.business_name}
-                subtitle={`${request.owner_name} — ${request.address || 'No address'}`}
-                status={request.collection_status}
-                onUpdate={(status, notes) =>
-                  handleRequestUpdate(request.id, status, notes)
-                }
-                updating={updating === `request-${request.id}`}
-              >
-                <div className="text-sm text-gray-600 space-y-1">
-                  {request.business_code && (
-                    <p className="text-xs text-gray-400">
-                      {request.business_code}
-                    </p>
-                  )}
-                  <p>
-                    Location: {Number(request.latitude).toFixed(5)},{' '}
-                    {Number(request.longitude).toFixed(5)}
-                  </p>
-                  {request.description && <p>{request.description}</p>}
-                  {request.phone_number && (
-                    <p>Phone: {request.phone_number}</p>
-                  )}
-                  {request.collector_notes && (
-                    <p>
-                      <span className="font-medium">Reason:</span>{' '}
-                      {request.collector_notes}
-                    </p>
-                  )}
+          <div className="space-y-5">
+            {requestGroups.map((group) => (
+              statusFilter !== 'all' && statusFilter !== group.status ? null :
+              <div key={group.status} className={`rounded-xl border p-4 ${group.color}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-gray-800">{statusLabel(group.labelKey, t)}</h3>
+                  <span className="text-xs font-medium text-gray-500">{group.items.length}</span>
                 </div>
-              </TaskCard>
+                {group.items.length === 0 ? (
+                  <p className="text-sm text-gray-500">{t('noRequestsGroup', { label: statusLabel(group.labelKey, t).toLowerCase() })}</p>
+                ) : (
+                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    {group.items.map((request) => (
+                      <TaskCard
+                        key={request.id}
+                        title={request.business_name}
+                        subtitle={`${request.owner_name} — ${request.address || t('noAddress')}`}
+                        status={request.collection_status}
+                        onUpdate={(status, notes) => handleRequestUpdate(request.id, status, notes)}
+                        updating={updating === `request-${request.id}`}
+                      >
+                        <div className="text-sm text-gray-600 space-y-1">
+                          {request.business_code && <p className="text-xs text-gray-400">{request.business_code}</p>}
+                          <p>{t('location', { lat: Number(request.latitude).toFixed(5), lng: Number(request.longitude).toFixed(5) })}</p>
+                          {request.description && <p>{request.description}</p>}
+                          {request.phone_number && <p>{t('phoneLabel')} {request.phone_number}</p>}
+                          {request.collector_notes && <p><span className="font-medium">{t('noteLabel')}</span> {request.collector_notes}</p>}
+                        </div>
+                      </TaskCard>
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         )}
       </section>
+      )}
     </div>
   )
 }

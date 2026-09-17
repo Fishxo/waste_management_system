@@ -7,6 +7,14 @@ const TYPE_LABELS = {
   all: 'Notifications + Reports',
 }
 
+const NOTIFICATION_TYPE_OPTIONS = [
+  { value: '', label: 'All notification types' },
+  { value: 'schedule_update', label: 'Schedule Update' },
+  { value: 'request_approved', label: 'Request Approved' },
+  { value: 'collector_assigned', label: 'Collector Assigned' },
+  { value: 'collection_completed', label: 'Collection Completed' },
+]
+
 const STATUS_BADGES = {
   pending: 'bg-amber-100 text-amber-800 border-amber-300',
   approved: 'bg-green-100 text-green-800 border-green-300',
@@ -16,7 +24,7 @@ const STATUS_BADGES = {
 export default function DeleteRequests() {
   const [requests, setRequests] = useState([])
   const [loading, setLoading] = useState(true)
-  const [form, setForm] = useState({ requestType: 'notifications', reason: '' })
+  const [form, setForm] = useState({ requestType: 'notifications', notificationType: '', reason: '' })
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
   const [formSuccess, setFormSuccess] = useState('')
@@ -44,9 +52,10 @@ export default function DeleteRequests() {
     try {
       await api.post('/muAdmin/delete-requests', {
         requestType: form.requestType,
+        notificationType: form.requestType === 'reports' ? undefined : form.notificationType || undefined,
         reason: form.reason.trim() || undefined,
       })
-      setForm({ requestType: 'notifications', reason: '' })
+      setForm({ requestType: 'notifications', notificationType: '', reason: '' })
       setFormSuccess('Deletion request submitted. Waiting for system admin approval.')
       fetchRequests()
     } catch (err) {
@@ -95,6 +104,22 @@ export default function DeleteRequests() {
               <option value="all">Notifications and Reports</option>
             </select>
           </div>
+          {form.requestType !== 'reports' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Notification type
+              </label>
+              <select
+                value={form.notificationType}
+                onChange={(e) => setForm({ ...form, notificationType: e.target.value })}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              >
+                {NOTIFICATION_TYPE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Reason (optional)

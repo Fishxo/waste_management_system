@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import api from '../../api/axios'
 import { useAuth } from '../../context/AuthContext'
 import PasswordInput from '../../components/PasswordInput'
@@ -8,6 +9,7 @@ export default function SystemAdminLogin() {
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const { t } = useTranslation()
   const { login } = useAuth()
   const navigate = useNavigate()
 
@@ -32,7 +34,7 @@ export default function SystemAdminLogin() {
       )
       navigate('/system-admin/dashboard')
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed')
+      setError(err.response?.data?.message || t('auth.loginFailed'))
     } finally {
       setLoading(false)
     }
@@ -41,7 +43,7 @@ export default function SystemAdminLogin() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h2 className="text-2xl font-bold text-center mb-6">System Admin Login</h2>
+        <h2 className="text-2xl font-bold text-center mb-6">{t('auth.systemAdminLogin')}</h2>
         {error && (
           <p className="text-red-600 text-sm text-center mb-4">{error}</p>
         )}
@@ -49,7 +51,7 @@ export default function SystemAdminLogin() {
           <input
             name="email"
             type="email"
-            placeholder="Email"
+            placeholder={t('auth.email')}
             value={form.email}
             onChange={handleChange}
             required
@@ -65,7 +67,7 @@ export default function SystemAdminLogin() {
             disabled={loading}
             className="bg-violet-600 hover:bg-violet-700 text-white py-2 rounded text-sm font-medium disabled:opacity-50 cursor-pointer"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? t('auth.signingIn') : t('auth.signIn')}
           </button>
         </form>
       </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import api from '../../api/axios'
 import { useAuth } from '../../context/AuthContext'
 import PasswordInput from '../../components/PasswordInput'
@@ -8,6 +9,7 @@ export default function ResidentLogin() {
   const [form, setForm] = useState({ identifier: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const { t } = useTranslation()
   const { login } = useAuth()
   const navigate = useNavigate()
 
@@ -35,7 +37,7 @@ export default function ResidentLogin() {
       )
       navigate('/resident/dashboard')
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed')
+      setError(err.response?.data?.message || t('auth.loginFailed'))
     } finally {
       setLoading(false)
     }
@@ -44,7 +46,7 @@ export default function ResidentLogin() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h2 className="text-2xl font-bold text-center mb-6">Resident Login</h2>
+        <h2 className="text-2xl font-bold text-center mb-6">{t('auth.residentLogin')}</h2>
         {error && (
           <p className="text-red-600 text-sm text-center mb-4">{error}</p>
         )}
@@ -52,7 +54,7 @@ export default function ResidentLogin() {
           <input
             name="identifier"
             type="text"
-            placeholder="Email or phone number"
+            placeholder={t('auth.emailOrPhone')}
             value={form.identifier}
             onChange={handleChange}
             required
@@ -68,18 +70,18 @@ export default function ResidentLogin() {
             disabled={loading}
             className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded text-sm font-medium disabled:opacity-50 cursor-pointer"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? t('auth.signingIn') : t('auth.signIn')}
           </button>
         </form>
         <p className="text-sm text-center mt-4">
-          Don&apos;t have an account?{' '}
+          {t('auth.noAccount')}{' '}
           <Link to="/resident/register" className="text-indigo-600 hover:underline">
-            Register
+            {t('auth.register')}
           </Link>
         </p>
         <p className="text-sm text-center mt-2">
           <Link to="/" className="text-gray-500 hover:underline">
-            Back to home
+            {t('auth.backToHome')}
           </Link>
         </p>
       </div>

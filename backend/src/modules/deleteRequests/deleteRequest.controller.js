@@ -3,7 +3,7 @@ const { getAdminKifleKetema } = require("../../utils/adminScope");
 
 exports.requestDeletion = async (req, res) => {
     try {
-        const { requestType, reason } = req.body;
+        const { requestType, notificationType, reason } = req.body;
         const kifleKetema = getAdminKifleKetema(req);
 
         if (!kifleKetema) {
@@ -14,6 +14,7 @@ exports.requestDeletion = async (req, res) => {
             req.user.id,
             kifleKetema,
             requestType,
+            notificationType,
             reason
         );
 

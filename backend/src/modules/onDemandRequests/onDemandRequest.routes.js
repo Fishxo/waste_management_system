@@ -23,9 +23,29 @@ router.get(
 );
 
 router.patch(
+    "/:id",
+    authMiddleware.authenticate,
+    onDemandRequestValidation.updateRequest,
+    onDemandRequestController.updateRequestByOwner
+);
+
+router.delete(
+    "/:id",
+    authMiddleware.authenticate,
+    onDemandRequestController.deleteRequestByOwner
+);
+
+router.patch(
     "/:id/confirm",
     authMiddleware.authenticate,
     onDemandRequestController.confirmCollection
+);
+
+router.post(
+    "/:id/issues",
+    authMiddleware.authenticate,
+    onDemandRequestValidation.createIssue,
+    onDemandRequestController.raiseIssue
 );
 
 module.exports = router;

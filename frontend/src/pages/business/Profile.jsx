@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import api from '../../api/axios'
 import Loading from '../../components/Loading'
 import Toast from '../resident/profile/Toast'
@@ -11,7 +12,7 @@ import {
 const inputClass =
   'border border-gray-300 rounded-lg px-3 py-2.5 text-sm w-full focus:outline-none focus:ring-2 focus:ring-amber-400'
 
-function InfoRow({ label, value }) {
+function InfoRow({ label, value, notProvided }) {
   return (
     <div className="flex items-center justify-between gap-4 py-3 border-b border-gray-100 last:border-b-0">
       <span className="text-sm text-gray-500">{label}</span>
@@ -20,13 +21,14 @@ function InfoRow({ label, value }) {
           value ? 'text-gray-900 font-medium' : 'text-gray-400 italic'
         }`}
       >
-        {value || 'Not provided'}
+        {value || notProvided}
       </span>
     </div>
   )
 }
 
 export default function BusinessProfile() {
+  const { t } = useTranslation()
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -58,16 +60,17 @@ export default function BusinessProfile() {
         businessType: normalized.businessType,
         kebele: normalized.kebele,
         kifleKetema: normalized.kifleKetema,
+        sefer: normalized.sefer,
       })
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          'We could not load your profile. Please try again.'
+          t('profile.failedToLoadProfile')
       )
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     loadProfile()
@@ -90,11 +93,11 @@ export default function BusinessProfile() {
       const { data } = await api.patch('/businessOwners/profile', form)
       setProfile(normalizeBusinessProfile(data?.data || {}))
       setIsEditing(false)
-      setToast({ message: 'Profile updated successfully', type: 'success' })
+      setToast({ message: t('profile.profileUpdated'), type: 'success' })
     } catch (err) {
       setFormError(
         err.response?.data?.message ||
-          'Failed to update profile. Please try again.'
+          t('profile.failedToUpdate')
       )
     } finally {
       setSaving(false)
@@ -109,7 +112,7 @@ export default function BusinessProfile() {
     setPasswordError('')
 
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setPasswordError('New password and confirmation do not match')
+      setPasswordError(t('profile.passwordMismatch'))
       return
     }
 
@@ -124,10 +127,10 @@ export default function BusinessProfile() {
         newPassword: '',
         confirmPassword: '',
       })
-      setToast({ message: 'Password changed successfully', type: 'success' })
+      setToast({ message: t('profile.passwordChanged'), type: 'success' })
     } catch (err) {
       setPasswordError(
-        err.response?.data?.message || 'Failed to change password'
+        err.response?.data?.message || t('profile.failedToChangePassword')
       )
     } finally {
       setPasswordSaving(false)
@@ -141,14 +144,14 @@ export default function BusinessProfile() {
       <div className="max-w-3xl mx-auto">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
           <h2 className="text-lg font-semibold text-gray-900">
-            Unable to load profile
+            {t('profile.unableToLoad')}
           </h2>
           <p className="text-sm text-gray-500 mt-1">{error}</p>
           <button
             onClick={loadProfile}
             className="mt-5 bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium cursor-pointer"
           >
-            Try Again
+            {t('profile.tryAgain')}
           </button>
         </div>
       </div>
@@ -172,7 +175,7 @@ export default function BusinessProfile() {
                 {profile.businessName}
               </h1>
               <span className="bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-1 rounded-full">
-                Business Owner
+                {t('profile.businessOwner')}
               </span>
               {profile.businessCode && (
                 <span className="bg-gray-100 text-gray-600 text-xs font-medium px-2.5 py-1 rounded-full">
@@ -182,7 +185,7 @@ export default function BusinessProfile() {
             </div>
             <p className="text-gray-600 text-sm mt-1">{profile.ownerName}</p>
             <p className="text-gray-500 text-sm mt-0.5">
-              {profile.email || 'Not provided'}
+              {profile.email || t('profile.notProvided')}
             </p>
           </div>
           {!isEditing && (
@@ -190,7 +193,7 @@ export default function BusinessProfile() {
               onClick={() => setIsEditing(true)}
               className="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium cursor-pointer shrink-0"
             >
-              Edit Profile
+              {t('profile.editProfile')}
             </button>
           )}
         </div>
@@ -201,7 +204,7 @@ export default function BusinessProfile() {
           onSubmit={handleSave}
           className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6"
         >
-          <h2 className="text-lg font-semibold text-gray-900">Edit Profile</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t('profile.editTitle')}</h2>
           {formError && (
             <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-4">
               {formError}
@@ -210,7 +213,7 @@ export default function BusinessProfile() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Business Name
+                {t('profile.businessName')}
               </label>
               <input
                 name="businessName"
@@ -222,7 +225,7 @@ export default function BusinessProfile() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Owner Name
+                {t('profile.ownerName')}
               </label>
               <input
                 name="ownerName"
@@ -235,7 +238,7 @@ export default function BusinessProfile() {
           </div>
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
+              {t('profile.email')}
             </label>
             <input
               value={profile.email || ''}
@@ -245,7 +248,7 @@ export default function BusinessProfile() {
           </div>
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Phone Number
+              {t('profile.phoneNumber')}
             </label>
             <input
               name="phoneNumber"
@@ -257,7 +260,7 @@ export default function BusinessProfile() {
           </div>
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Business Type
+              {t('profile.businessType')}
             </label>
             <select
               name="businessType"
@@ -268,14 +271,14 @@ export default function BusinessProfile() {
             >
               {BUSINESS_TYPES.map((type) => (
                 <option key={type} value={type}>
-                  {type}
+                  {t(`auth.businessTypes.${type}`)}
                 </option>
               ))}
             </select>
           </div>
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Address
+              {t('profile.address')}
             </label>
             <input
               name="address"
@@ -288,7 +291,7 @@ export default function BusinessProfile() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Kifle Ketema
+                {t('profile.kifleKetema')}
               </label>
               <input
                 name="kifleKetema"
@@ -300,11 +303,23 @@ export default function BusinessProfile() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Kebele
+                {t('profile.kebele')}
               </label>
               <input
                 name="kebele"
                 value={form.kebele}
+                onChange={handleFormChange}
+                required
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {t('profile.sefer')}
+              </label>
+              <input
+                name="sefer"
+                value={form.sefer}
                 onChange={handleFormChange}
                 required
                 className={inputClass}
@@ -317,7 +332,7 @@ export default function BusinessProfile() {
               disabled={saving}
               className="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium cursor-pointer disabled:opacity-50"
             >
-              {saving ? 'Saving...' : 'Save'}
+              {saving ? t('profile.saving') : t('profile.save')}
             </button>
             <button
               type="button"
@@ -325,7 +340,7 @@ export default function BusinessProfile() {
               disabled={saving}
               className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-5 py-2.5 rounded-lg text-sm font-medium cursor-pointer disabled:opacity-50"
             >
-              Cancel
+              {t('profile.cancel')}
             </button>
           </div>
         </form>
@@ -333,21 +348,23 @@ export default function BusinessProfile() {
         <>
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
             <h2 className="text-lg font-semibold text-gray-900">
-              Profile Information
+              {t('profile.profileInformation')}
             </h2>
             <div className="mt-2">
-              <InfoRow label="Business Name" value={profile.businessName} />
-              <InfoRow label="Business Code" value={profile.businessCode} />
-              <InfoRow label="Owner Name" value={profile.ownerName} />
-              <InfoRow label="Email" value={profile.email} />
-              <InfoRow label="Phone Number" value={profile.phoneNumber} />
-              <InfoRow label="Business Type" value={profile.businessType} />
-              <InfoRow label="Address" value={profile.address} />
-              <InfoRow label="Kifle Ketema" value={profile.kifleKetema} />
-              <InfoRow label="Kebele" value={profile.kebele} />
+              <InfoRow label={t('profile.businessName')} value={profile.businessName} notProvided={t('profile.notProvided')} />
+              <InfoRow label={t('profile.businessCode')} value={profile.businessCode} notProvided={t('profile.notProvided')} />
+              <InfoRow label={t('profile.ownerName')} value={profile.ownerName} notProvided={t('profile.notProvided')} />
+              <InfoRow label={t('profile.email')} value={profile.email} notProvided={t('profile.notProvided')} />
+              <InfoRow label={t('profile.phoneNumber')} value={profile.phoneNumber} notProvided={t('profile.notProvided')} />
+              <InfoRow label={t('profile.businessType')} value={profile.businessType} notProvided={t('profile.notProvided')} />
+              <InfoRow label={t('profile.address')} value={profile.address} notProvided={t('profile.notProvided')} />
+              <InfoRow label={t('profile.kifleKetema')} value={profile.kifleKetema} notProvided={t('profile.notProvided')} />
+              <InfoRow label={t('profile.kebele')} value={profile.kebele} notProvided={t('profile.notProvided')} />
+              <InfoRow label={t('profile.sefer')} value={profile.sefer} notProvided={t('profile.notProvided')} />
               <InfoRow
-                label="Registration Date"
+                label={t('profile.registrationDate')}
                 value={formatDate(profile.registrationDate)}
+                notProvided={t('profile.notProvided')}
               />
             </div>
           </div>
@@ -357,7 +374,7 @@ export default function BusinessProfile() {
             className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mt-6"
           >
             <h2 className="text-lg font-semibold text-gray-900">
-              Change Password
+              {t('profile.changePassword')}
             </h2>
             {passwordError && (
               <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-4">
@@ -368,7 +385,7 @@ export default function BusinessProfile() {
               <input
                 name="currentPassword"
                 type="password"
-                placeholder="Current Password"
+                placeholder={t('profile.currentPassword')}
                 value={passwordForm.currentPassword}
                 onChange={handlePasswordChange}
                 required
@@ -377,7 +394,7 @@ export default function BusinessProfile() {
               <input
                 name="newPassword"
                 type="password"
-                placeholder="New Password"
+                placeholder={t('profile.newPassword')}
                 value={passwordForm.newPassword}
                 onChange={handlePasswordChange}
                 required
@@ -387,7 +404,7 @@ export default function BusinessProfile() {
               <input
                 name="confirmPassword"
                 type="password"
-                placeholder="Confirm New Password"
+                placeholder={t('profile.confirmNewPassword')}
                 value={passwordForm.confirmPassword}
                 onChange={handlePasswordChange}
                 required
@@ -400,7 +417,7 @@ export default function BusinessProfile() {
               disabled={passwordSaving}
               className="mt-6 bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium cursor-pointer disabled:opacity-50"
             >
-              {passwordSaving ? 'Updating...' : 'Change Password'}
+              {passwordSaving ? t('profile.updating') : t('profile.changePassword')}
             </button>
           </form>
         </>

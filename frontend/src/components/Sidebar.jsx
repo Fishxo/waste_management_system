@@ -1,75 +1,99 @@
 import { NavLink, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { useNotification } from '../context/NotificationContext'
+import LanguageSelector from './LanguageSelector'
 
 const residentLinks = [
-  { to: '/resident/dashboard', label: 'Dashboard', icon: '📊' },
-  { to: '/resident/profile', label: 'Profile', icon: '👤' },
-  { to: '/resident/create-report', label: 'Create Report', icon: '📝' },
-  { to: '/resident/my-reports', label: 'My Reports', icon: '📋' },
-  { to: '/resident/schedules', label: 'Schedules', icon: '🗓️' },
-  { to: '/resident/my-schedule-issues', label: 'Schedule Issues', icon: '⚠️' },
-  { to: '/resident/notifications', label: 'Notifications', icon: '🔔' },
-  { to: '/resident/feedback', label: 'Feedback', icon: '💬' },
+  { to: '/resident/dashboard', key: 'dashboard', icon: '📊' },
+  { to: '/resident/profile', key: 'profile', icon: '👤' },
+  { to: '/resident/create-report', key: 'createReport', icon: '📝' },
+  { to: '/resident/my-reports', key: 'myReports', icon: '📋' },
+  { to: '/resident/schedules', key: 'schedules', icon: '🗓️' },
+  { to: '/resident/my-schedule-issues', key: 'scheduleIssues', icon: '⚠️' },
+  {
+    to: '/resident/notifications',
+    key: 'notifications',
+    icon: '🔔',
+    hasBadge: true,
+  },
+  { to: '/resident/feedback', key: 'feedback', icon: '💬' },
 ]
 
 const adminLinks = [
-  { to: '/admin/dashboard', label: 'Dashboard', icon: '📊' },
-  { to: '/admin/reports', label: 'Resident Reports', icon: '📋' },
-  { to: '/admin/operational-reports', label: 'Operational Reports', icon: '📈' },
-  { to: '/admin/residents', label: 'Residents', icon: '👥' },
-  { to: '/admin/business-owners', label: 'Business Owners', icon: '🏪' },
-  { to: '/admin/schedules', label: 'Schedules', icon: '🗓️' },
-  { to: '/admin/schedule-issues', label: 'Schedule Issues', icon: '⚠️' },
-  { to: '/admin/on-demand-requests', label: 'On-Demand Requests', icon: '🚛' },
-  { to: '/admin/collectors', label: 'Collectors', icon: '🧑‍🔧' },
-  { to: '/admin/send-notifications', label: 'Send Notifications', icon: '📢' },
-  { to: '/admin/notification-history', label: 'Notification History', icon: '📜' },
-  { to: '/admin/feedback', label: 'Feedback', icon: '💬' },
-  { to: '/admin/messages', label: 'Message System Admin', icon: '✉️' },
-  { to: '/admin/delete-requests', label: 'Delete Requests', icon: '🗑️' },
+  { to: '/admin/dashboard', key: 'dashboard', icon: '📊' },
+  { to: '/admin/reports', key: 'residentReports', icon: '📋' },
+  { to: '/admin/operational-reports', key: 'operationalReports', icon: '📈' },
+  { to: '/admin/residents', key: 'residents', icon: '👥' },
+  { to: '/admin/business-owners', key: 'businessOwners', icon: '🏪' },
+  { to: '/admin/schedules', key: 'schedules', icon: '🗓️' },
+  { to: '/admin/schedule-issues', key: 'scheduleIssues', icon: '⚠️' },
+  { to: '/admin/on-demand-requests', key: 'onDemandRequests', icon: '🚛' },
+  { to: '/admin/collectors', key: 'collectors', icon: '🧑‍🔧' },
+  { to: '/admin/send-notifications', key: 'sendNotifications', icon: '📢' },
+  { to: '/admin/notification-history', key: 'notificationHistory', icon: '📜' },
+  { to: '/admin/feedback', key: 'feedback', icon: '💬' },
+  { to: '/admin/messages', key: 'messageSystemAdmin', icon: '✉️' },
+  { to: '/admin/delete-requests', key: 'deleteRequests', icon: '🗑️' },
 ]
 
 const businessLinks = [
-  { to: '/business/dashboard', label: 'Dashboard', icon: '📊' },
-  { to: '/business/profile', label: 'Profile', icon: '👤' },
-  { to: '/business/schedules', label: 'Schedules', icon: '🗓️' },
-  { to: '/business/create-request', label: 'Request Collection', icon: '🚛' },
-  { to: '/business/my-requests', label: 'My Requests', icon: '📋' },
-  { to: '/business/notifications', label: 'Notifications', icon: '🔔' },
-  { to: '/business/feedback', label: 'Feedback', icon: '💬' },
+  { to: '/business/dashboard', key: 'dashboard', icon: '📊' },
+  { to: '/business/profile', key: 'profile', icon: '👤' },
+  { to: '/business/create-report', key: 'createReport', icon: '📝' },
+  { to: '/business/my-reports', key: 'myReports', icon: '📋' },
+  { to: '/business/schedules', key: 'schedules', icon: '🗓️' },
+  { to: '/business/schedule-issues', key: 'raisedIssues', icon: '⚠️' },
+  { to: '/business/create-request', key: 'requestCollection', icon: '🚛' },
+  { to: '/business/my-requests', key: 'myRequests', icon: '📋' },
+  {
+    to: '/business/notifications',
+    key: 'notifications',
+    icon: '🔔',
+    hasBadge: true,
+  },
+  { to: '/business/feedback', key: 'feedback', icon: '💬' },
 ]
 
 const collectorLinks = [
-  { to: '/collector/dashboard', label: 'Dashboard', icon: '📊' },
-  { to: '/collector/reports/create', label: 'Create Report', icon: '📝' },
+  { to: '/collector/dashboard', key: 'dashboard', icon: '📊' },
+  { to: '/collector/schedules', key: 'schedules', icon: '🗓️' },
+  { to: '/collector/on-demand-requests', key: 'assignedRequests', icon: '🚛' },
+  { to: '/collector/reports/create', key: 'createReport', icon: '📝' },
   {
     to: '/collector/reports',
-    label: 'My Reports',
+    key: 'myReports',
     icon: '📋',
     isActive: (pathname) =>
       pathname === '/collector/reports' ||
       (pathname.startsWith('/collector/reports/') &&
         !pathname.startsWith('/collector/reports/create')),
   },
-  { to: '/collector/notifications', label: 'Notifications', icon: '🔔' },
-  { to: '/collector/change-password', label: 'Change Password', icon: '🔑' },
+  {
+    to: '/collector/notifications',
+    key: 'notifications',
+    icon: '🔔',
+    hasBadge: true,
+  },
+  { to: '/collector/change-password', key: 'changePassword', icon: '🔑' },
 ]
 
 const systemAdminLinks = [
-  { to: '/system-admin/dashboard', label: 'Dashboard', icon: '📊' },
-  { to: '/system-admin/staff', label: 'Staff', icon: '🧑‍💼' },
-  { to: '/system-admin/users', label: 'Users', icon: '👥' },
-  { to: '/system-admin/reports', label: 'Reports', icon: '📋' },
-  { to: '/system-admin/activity-logs', label: 'Activity Log', icon: '📜' },
-  { to: '/system-admin/messages', label: 'Admin Messages', icon: '✉️' },
-  { to: '/system-admin/delete-requests', label: 'Delete Requests', icon: '🗑️' },
-  { to: '/system-admin/backup', label: 'Backup & Restore', icon: '💾' },
+  { to: '/system-admin/dashboard', key: 'dashboard', icon: '📊' },
+  { to: '/system-admin/staff', key: 'staff', icon: '🧑‍💼' },
+  { to: '/system-admin/users', key: 'users', icon: '👥' },
+  { to: '/system-admin/reports', key: 'reports', icon: '📋' },
+  { to: '/system-admin/feedback', key: 'systemFeedback', icon: '💬' },
+  { to: '/system-admin/activity-logs', key: 'activityLog', icon: '📜' },
+  { to: '/system-admin/messages', key: 'adminMessages', icon: '✉️' },
+  { to: '/system-admin/delete-requests', key: 'deleteRequests', icon: '🗑️' },
+  { to: '/system-admin/backup', key: 'backupRestore', icon: '💾' },
 ]
 
 export default function Sidebar() {
   const { user } = useAuth()
   const { unreadCount } = useNotification()
+  const { t } = useTranslation()
   const location = useLocation()
   const isAdmin = user?.role === 'municipal_admin'
   const isSystemAdmin = user?.role === 'system_admin'
@@ -86,18 +110,21 @@ export default function Sidebar() {
         : residentLinks
 
   const panelTitle = isSystemAdmin
-    ? 'System Admin'
+    ? t('sidebar.systemAdminPanel')
     : isAdmin
-    ? 'Admin Panel'
+    ? t('sidebar.adminPanel')
     : isBusiness
-      ? 'Business Panel'
+      ? t('sidebar.businessPanel')
       : isCollector
-        ? 'Collector Panel'
-        : 'Resident Panel'
+        ? t('sidebar.collectorPanel')
+        : t('sidebar.residentPanel')
 
   return (
     <aside className="w-64 bg-gray-900 text-white min-h-screen flex flex-col p-4">
-      <div className="text-lg font-bold mb-8 px-3">{panelTitle}</div>
+      <div className="flex items-center justify-between mb-8 px-3">
+        <div className="text-lg font-bold">{panelTitle}</div>
+        <LanguageSelector className="bg-gray-800 text-gray-200 border border-gray-700" />
+      </div>
       <nav className="flex flex-col gap-1">
         {links.map((link) => (
           <NavLink
@@ -115,8 +142,8 @@ export default function Sidebar() {
             }}
           >
             <span>{link.icon}</span>
-            <span className="flex-1">{link.label}</span>
-            {link.label === 'Notifications' && unreadCount > 0 && (
+            <span className="flex-1">{t(`sidebar.${link.key}`)}</span>
+            {link.hasBadge && unreadCount > 0 && (
               <span className="min-w-[1.4rem] h-5 px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-semibold">
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>

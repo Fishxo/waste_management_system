@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import api from '../../../api/axios'
 
 const inputClass =
   'border border-gray-300 rounded-lg px-3 py-2.5 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-400'
 
 export default function ProfilePasswordCard({ onSuccess }) {
+  const { t } = useTranslation()
   const [form, setForm] = useState({
     currentPassword: '',
     newPassword: '',
@@ -21,7 +23,7 @@ export default function ProfilePasswordCard({ onSuccess }) {
     setError('')
 
     if (form.newPassword !== form.confirmPassword) {
-      setError('New password and confirmation do not match')
+      setError(t('profile.passwordMismatch'))
       return
     }
 
@@ -32,9 +34,9 @@ export default function ProfilePasswordCard({ onSuccess }) {
         newPassword: form.newPassword,
       })
       setForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
-      onSuccess('Password changed successfully')
+      onSuccess(t('profile.passwordChanged'))
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to change password')
+      setError(err.response?.data?.message || t('profile.failedToChangePassword'))
     } finally {
       setSaving(false)
     }
@@ -45,9 +47,9 @@ export default function ProfilePasswordCard({ onSuccess }) {
       onSubmit={handleSubmit}
       className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mt-6"
     >
-      <h2 className="text-lg font-semibold text-gray-900">Change Password</h2>
+      <h2 className="text-lg font-semibold text-gray-900">{t('profile.changePassword')}</h2>
       <p className="text-sm text-gray-500 mb-4">
-        Update the password you use to sign in
+        {t('profile.changePasswordDesc')}
       </p>
 
       {error && (
@@ -59,7 +61,7 @@ export default function ProfilePasswordCard({ onSuccess }) {
       <div className="max-w-sm space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Current Password
+            {t('profile.currentPassword')}
           </label>
           <input
             name="currentPassword"
@@ -73,7 +75,7 @@ export default function ProfilePasswordCard({ onSuccess }) {
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            New Password
+            {t('profile.newPassword')}
           </label>
           <input
             name="newPassword"
@@ -88,7 +90,7 @@ export default function ProfilePasswordCard({ onSuccess }) {
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Confirm New Password
+            {t('profile.confirmNewPassword')}
           </label>
           <input
             name="confirmPassword"
@@ -108,7 +110,7 @@ export default function ProfilePasswordCard({ onSuccess }) {
         disabled={saving}
         className="mt-6 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium cursor-pointer disabled:opacity-50"
       >
-        {saving ? 'Updating...' : 'Change Password'}
+        {saving ? t('profile.updating') : t('profile.changePassword')}
       </button>
     </form>
   )

@@ -40,8 +40,12 @@ import CollectorUpdateReport from '../pages/collector/UpdateReport'
 import BusinessDashboard from '../pages/business/Dashboard'
 import BusinessProfile from '../pages/business/Profile'
 import BusinessSchedules from '../pages/business/Schedules'
+import BusinessScheduleIssues from '../pages/business/ScheduleIssues'
 import CreateOnDemandRequest from '../pages/business/CreateOnDemandRequest'
 import MyOnDemandRequests from '../pages/business/MyOnDemandRequests'
+import BusinessCreateReport from '../pages/business/CreateReport'
+import BusinessMyReports from '../pages/business/MyReports'
+import BusinessUpdateReport from '../pages/business/UpdateReport'
 import NotificationsPage from '../pages/shared/Notifications'
 import AdminSendNotifications from '../pages/admin/SendNotifications'
 import AdminNotificationHistory from '../pages/admin/NotificationHistory'
@@ -218,6 +222,46 @@ export default function AppRoutes() {
         }
       />
       <Route
+        path="/business/schedule-issues"
+        element={
+          <ProtectedRoute role="business_owner">
+            <DashboardLayout>
+              <BusinessScheduleIssues />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/business/create-report"
+        element={
+          <ProtectedRoute role="business_owner">
+            <DashboardLayout>
+              <BusinessCreateReport />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/business/my-reports"
+        element={
+          <ProtectedRoute role="business_owner">
+            <DashboardLayout>
+              <BusinessMyReports />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/business/my-reports/:id/edit"
+        element={
+          <ProtectedRoute role="business_owner">
+            <DashboardLayout>
+              <BusinessUpdateReport />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/business/create-request"
         element={
           <ProtectedRoute role="business_owner">
@@ -264,6 +308,26 @@ export default function AppRoutes() {
           <ProtectedRoute role="collector">
             <DashboardLayout>
               <CollectorDashboard />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/collector/schedules"
+        element={
+          <ProtectedRoute role="collector">
+            <DashboardLayout>
+              <CollectorDashboard view="schedules" />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/collector/on-demand-requests"
+        element={
+          <ProtectedRoute role="collector">
+            <DashboardLayout>
+              <CollectorDashboard view="requests" />
             </DashboardLayout>
           </ProtectedRoute>
         }
@@ -526,6 +590,16 @@ export default function AppRoutes() {
           <ProtectedRoute role="system_admin">
             <DashboardLayout>
               <SystemAdminReports />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/system-admin/feedback"
+        element={
+          <ProtectedRoute role="system_admin">
+            <DashboardLayout>
+              <AdminFeedback systemAdmin />
             </DashboardLayout>
           </ProtectedRoute>
         }

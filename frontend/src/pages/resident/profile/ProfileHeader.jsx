@@ -1,9 +1,12 @@
+import { useTranslation } from 'react-i18next'
 import { getInitials } from './profileUtils'
 
 export default function ProfileHeader({ profile, onEdit }) {
+  const { t } = useTranslation()
   const initials = getInitials(profile.firstName, profile.lastName)
   const displayName =
-    [profile.firstName, profile.lastName].filter(Boolean).join(' ') || 'Resident'
+    [profile.firstName, profile.lastName].filter(Boolean).join(' ') ||
+    t('profile.resident')
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-6">
@@ -17,7 +20,7 @@ export default function ProfileHeader({ profile, onEdit }) {
               {displayName}
             </h1>
             <span className="bg-indigo-100 text-indigo-700 text-xs font-medium px-2.5 py-1 rounded-full">
-              Resident
+              {t('profile.resident')}
             </span>
             {profile.residentCode && (
               <span className="bg-gray-100 text-gray-700 text-xs font-medium px-2.5 py-1 rounded-full">
@@ -26,17 +29,17 @@ export default function ProfileHeader({ profile, onEdit }) {
             )}
           </div>
           <p className="text-gray-600 text-sm mt-1">
-            {profile.email || 'Not provided'}
+            {profile.email || t('profile.notProvided')}
           </p>
           <p className="text-gray-500 text-sm mt-0.5">
-            {profile.phoneNumber || 'Not provided'}
+            {profile.phoneNumber || t('profile.notProvided')}
           </p>
         </div>
         <button
           onClick={onEdit}
           className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium cursor-pointer shrink-0"
         >
-          Edit Profile
+          {t('profile.editProfile')}
         </button>
       </div>
     </div>

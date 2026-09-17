@@ -1,5 +1,6 @@
 const scheduleIssueRepository = require("./scheduleIssue.repository");
 const residentRepository = require("../residents/resident.repository");
+const businessOwnerRepository = require("../businessOwners/businessOwner.repository");
 
 function normalizeAreaValue(value) {
     return String(value ?? "").trim().toLowerCase();
@@ -16,12 +17,13 @@ function residentBelongsToScheduleArea(resident, schedule) {
     );
 }
 
-exports.createIssue = async (residentId, scheduleId, description) => {
-    const resident = await residentRepository.findResidentById(residentId);
+exports.createIssue = async (actorRole, actorId, scheduleId, description) => {
+    const actor = actorRole === "business_owner"
+        ? await businessOwnerRepository.findBusinessOwnerById(actorId)
+        : await residentRepository.findResidentById(actorId);
 
-    if (!resident) {
-        throw new Error("Resident not found");
-    }
+    if (!actor) throw new Error(actorRole === "business_owner" ? "Business owner not found" : "Resident not found");
+    if (actor.is_active === false) throw new Error("Your account has been deactivated");
 
     const schedule = await scheduleIssueRepository.findScheduleById(scheduleId);
 
@@ -29,12 +31,16 @@ exports.createIssue = async (residentId, scheduleId, description) => {
         throw new Error("Schedule not found");
     }
 
-    if (!residentBelongsToScheduleArea(resident, schedule)) {
+    if (
+        normalizeAreaValue(actor.kifle_ketema) !== normalizeAreaValue(schedule.kifle_ketema) ||
+        normalizeAreaValue(actor.kebele) !== normalizeAreaValue(schedule.kebele)
+    ) {
         throw new Error("You can only raise issues for schedules in your area");
     }
 
     const activeIssue = await scheduleIssueRepository.findActiveIssue(
-        residentId,
+        actorRole,
+        actorId,
         scheduleId
     );
 
@@ -44,15 +50,16 @@ exports.createIssue = async (residentId, scheduleId, description) => {
 
     const issue = await scheduleIssueRepository.createIssue(
         scheduleId,
-        residentId,
+        actorRole,
+        actorId,
         description.trim()
     );
 
     return issue;
 };
 
-exports.getAllIssues = async (status, kifleKetema) => {
-    return await scheduleIssueRepository.getAllIssues(status, kifleKetema);
+exports.getAllIssues = async (status, kifleKetema, type) => {
+    return await scheduleIssueRepository.getAllIssues(status, kifleKetema, type);
 };
 
 exports.getIssuesByResident = async (residentId) => {
@@ -61,6 +68,10 @@ exports.getIssuesByResident = async (residentId) => {
     );
 
     return issues;
+};
+
+exports.getIssuesByBusinessOwner = async (businessId) => {
+    return await scheduleIssueRepository.getIssuesByBusinessOwnerId(businessId);
 };
 
 exports.updateIssueStatus = async (issueId, status) => {

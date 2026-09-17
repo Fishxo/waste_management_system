@@ -90,10 +90,14 @@ exports.updateReportStatus = async (req, res) => {
 //get whole reports 
 exports.getAllReports = async (req, res) => {
     try {
-        const { status } = req.query;
+        const { status, reporterRole } = req.query;
         const kifleKetema = getAdminKifleKetema(req);
 
-        const reports = await adminService.getAllReports(status, kifleKetema);
+        const reports = await adminService.getAllReports(
+          status,
+          kifleKetema,
+          reporterRole
+        );
 
         res.status(200).json({
             message: "Reports retrieved successfully",
