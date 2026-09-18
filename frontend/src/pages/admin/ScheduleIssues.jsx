@@ -61,6 +61,22 @@ export default function AdminScheduleIssues() {
   const [updating, setUpdating] = useState(null)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [delRequests, setDelRequests] = useState([])
+  const [delReason, setDelReason] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [delMessage, setDelMessage] = useState('')
+  const [delError, setDelError] = useState('')
+
+  const fetchDelRequests = () => {
+    api
+      .get('/muAdmin/schedule-issue-delete-requests')
+      .then(({ data }) => {
+        setDelRequests(Array.isArray(data) ? data : data.data || [])
+      })
+      .catch(() => {
+        setDelRequests([])
+      })
+  }
 
   const fetchIssues = (status = '', type = '') => {
     setLoading(true)
@@ -86,10 +102,20 @@ export default function AdminScheduleIssues() {
   }, [filter, typeFilter])
 
   useEffect(() => {
+    fetchDelRequests()
+  }, [])
+
+  useEffect(() => {
     if (!message) return
     const timer = setTimeout(() => setMessage(''), 4000)
     return () => clearTimeout(timer)
   }, [message])
+
+  useEffect(() => {
+    if (!delMessage) return
+    const timer = setTimeout(() => setDelMessage(''), 4000)
+    return () => clearTimeout(timer)
+  }, [delMessage])
 
   const handleStatusChange = async (issueId, newStatus) => {
     if (!newStatus) return
@@ -108,12 +134,117 @@ export default function AdminScheduleIssues() {
     }
   }
 
+  const handleDeletionRequest = async (e) => {
+    e.preventDefault()
+    setDelError('')
+    setDelMessage('')
+    setSubmitting(true)
+    try {
+      const { data } = await api.post('/muAdmin/delete-requests', {
+        requestType: 'schedule_issues',
+        reason: delReason.trim() || undefined,
+      })
+      setDelReason('')
+      setDelMessage(
+        data.message ||
+          `Deletion request submitted. ${data.data?.schedule_issues_count ?? 0} schedule issue(s) will be deleted after system admin approval.`
+      )
+      fetchDelRequests()
+    } catch (err) {
+      setDelError(err.response?.data?.message || 'Failed to submit request')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const deleteReqBadge = (status) => {
+    const styles = {
+      pending: 'bg-amber-100 text-amber-800 border-amber-300',
+      approved: 'bg-green-100 text-green-800 border-green-300',
+      denied: 'bg-red-100 text-red-800 border-red-300',
+    }
+    return styles[status] || 'bg-gray-100 text-gray-800 border-gray-300'
+  }
+
   return (
     <div>
       <h2 className="text-2xl font-bold mb-2">Schedule Issues</h2>
       <p className="text-gray-500 mb-6">
         Issues raised by residents when a collection schedule was not followed.
       </p>
+
+      <div className="mb-6 bg-white rounded-lg shadow p-5 space-y-4">
+        <div>
+          <h3 className="font-semibold text-gray-800">Request Deletion of Schedule Issues</h3>
+          <p className="text-sm text-gray-500 mt-1">
+            Request to permanently delete all schedule issues within your kifle
+            ketema. The system admin must approve before anything is deleted.
+          </p>
+        </div>
+
+        {delMessage && (
+          <p className="px-4 py-2.5 rounded-lg text-sm bg-green-50 text-green-700 border border-green-200">
+            {delMessage}
+          </p>
+        )}
+        {delError && (
+          <p className="px-4 py-2.5 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200">
+            {delError}
+          </p>
+        )}
+
+        <form onSubmit={handleDeletionRequest} className="space-y-3">
+          <textarea
+            placeholder="Reason (optional)"
+            value={delReason}
+            onChange={(e) => setDelReason(e.target.value)}
+            rows={2}
+            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
+          />
+          <button
+            type="submit"
+            disabled={submitting}
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-medium disabled:opacity-50 cursor-pointer"
+          >
+            {submitting ? 'Submitting...' : 'Request Deletion'}
+          </button>
+        </form>
+
+        {delRequests.length > 0 && (
+          <div className="pt-2">
+            <h4 className="text-sm font-semibold text-gray-700 mb-2">
+              My Deletion Requests
+            </h4>
+            <div className="divide-y bg-gray-50 rounded border border-gray-200">
+              {delRequests.map((req) => (
+                <div key={req.id} className="p-3 text-sm flex flex-wrap items-center gap-3">
+                  <span className="font-medium text-gray-800">
+                    {req.schedule_issues_count} schedule issue(s)
+                  </span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${deleteReqBadge(req.status)}`}
+                  >
+                    {req.status.charAt(0).toUpperCase() + req.status.slice(1)}
+                  </span>
+                  {req.deleted_schedule_issues !== null && (
+                    <span className="text-xs text-green-600">
+                      Deleted: {req.deleted_schedule_issues}
+                    </span>
+                  )}
+                  {req.reason && (
+                    <span className="text-xs text-gray-500">Reason: {req.reason}</span>
+                  )}
+                  {req.reviewed_at && (
+                    <span className="text-xs text-gray-500">
+                      Reviewed: {new Date(req.reviewed_at).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="flex flex-wrap gap-2">

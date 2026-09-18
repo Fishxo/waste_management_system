@@ -23,6 +23,9 @@ exports.requestDeletion = async (req, res) => {
             data,
         });
     } catch (err) {
+        if (err.statusCode && err.message) {
+            return res.status(err.statusCode).json({ message: err.message });
+        }
         res.status(500).json({ message: "Server error" });
     }
 };
@@ -33,6 +36,19 @@ exports.getMyRequests = async (req, res) => {
 
         res.status(200).json({
             message: "Delete requests retrieved successfully",
+            data,
+        });
+    } catch (err) {
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+exports.getMyScheduleIssueRequests = async (req, res) => {
+    try {
+        const data = await deleteRequestService.getMyScheduleIssueRequests(req.user.id);
+
+        res.status(200).json({
+            message: "Schedule issue delete requests retrieved successfully",
             data,
         });
     } catch (err) {
@@ -68,10 +84,14 @@ exports.decideRequest = async (req, res) => {
         );
 
         if (status === "approved") {
-            res.status(200).json({
-                message: `Request approved. ${result.deletedNotifications} notification(s) and ${result.deletedReports} report(s) deleted.`,
-                data: result.request,
-            });
+            const type = result.request.request_type;
+            let message =
+                `Request approved. ${result.deletedNotifications} notification(s) and ` +
+                `${result.deletedReports} report(s) deleted.`;
+            if (type === "schedule_issues") {
+                message = `Request approved. ${result.deletedScheduleIssues} schedule issue(s) deleted.`;
+            }
+            res.status(200).json({ message, data: result.request });
         } else {
             res.status(200).json({
                 message: "Request denied. Nothing was deleted.",

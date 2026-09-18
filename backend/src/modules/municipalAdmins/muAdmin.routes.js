@@ -416,5 +416,12 @@ router.get(
     deleteRequestController.getMyRequests
 );
 
+//list my schedule issue deletion requests and their approval status
+router.get(
+    "/schedule-issue-delete-requests",
+    authenticateMuAdmin,
+    deleteRequestController.getMyScheduleIssueRequests
+);
+
 module.exports = router;
 

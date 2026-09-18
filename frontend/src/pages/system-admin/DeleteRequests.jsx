@@ -5,6 +5,7 @@ const TYPE_LABELS = {
   notifications: 'Notifications',
   reports: 'Reports',
   all: 'Notifications + Reports',
+  schedule_issues: 'Schedule Issues',
 }
 
 const NOTIFICATION_TYPE_LABELS = {
@@ -104,6 +105,9 @@ export default function DeleteRequests() {
                         ({NOTIFICATION_TYPE_LABELS[req.notification_type] || req.notification_type})
                       </span>
                     )}
+                    <span className="text-xs text-amber-700">
+                      Schedule Issues: {req.schedule_issues_count}
+                    </span>
                     <span
                       className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${STATUS_BADGES[req.status] || ''}`}
                     >
@@ -125,13 +129,26 @@ export default function DeleteRequests() {
                   <p className="text-xs text-gray-600 mt-1">Reason: {req.reason}</p>
                 )}
                 <div className="text-xs text-gray-500 mt-1 flex flex-wrap gap-4">
-                  <span>Notifications found: {req.notifications_count}</span>
-                  <span>Reports found: {req.reports_count}</span>
-                  {req.deleted_notifications !== null && (
-                    <span className="text-green-600">
-                      Deleted: {req.deleted_notifications} notifications,{' '}
-                      {req.deleted_reports} reports
-                    </span>
+                  {req.request_type === 'schedule_issues' ? (
+                    <>
+                      <span>Schedule issues found: {req.schedule_issues_count}</span>
+                      {req.deleted_schedule_issues !== null && (
+                        <span className="text-green-600">
+                          Deleted: {req.deleted_schedule_issues} schedule issues
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <span>Notifications found: {req.notifications_count}</span>
+                      <span>Reports found: {req.reports_count}</span>
+                      {req.deleted_notifications !== null && (
+                        <span className="text-green-600">
+                          Deleted: {req.deleted_notifications} notifications,{' '}
+                          {req.deleted_reports} reports
+                        </span>
+                      )}
+                    </>
                   )}
                   {req.reviewed_at && (
                     <span>Reviewed at: {formatDate(req.reviewed_at)}</span>

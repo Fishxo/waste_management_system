@@ -1,9 +1,9 @@
 exports.requestDeletion = (req, res, next) => {
     const { requestType, notificationType, reason } = req.body;
 
-    if (!["notifications", "reports", "all"].includes(requestType)) {
+    if (!["notifications", "reports", "all", "schedule_issues"].includes(requestType)) {
         return res.status(400).json({
-            message: "requestType must be notifications, reports or all",
+            message: "requestType must be notifications, reports, all or schedule_issues",
         });
     }
 
@@ -19,6 +19,11 @@ exports.requestDeletion = (req, res, next) => {
     if (notificationType && requestType === "reports") {
         return res.status(400).json({
             message: "Notification type can only be used for notification deletion",
+        });
+    }
+    if (notificationType && requestType === "schedule_issues") {
+        return res.status(400).json({
+            message: "Notification type cannot be used for schedule issue deletion",
         });
     }
 

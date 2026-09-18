@@ -290,6 +290,7 @@ router.patch(
             decision: req.body?.status || null,
             deletedNotifications: body?.data?.deleted_notifications ?? null,
             deletedReports: body?.data?.deleted_reports ?? null,
+            deletedScheduleIssues: body?.data?.deleted_schedule_issues ?? null,
         }),
     }),
     deleteRequestController.decideRequest
